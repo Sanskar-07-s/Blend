@@ -1,0 +1,396 @@
+{
+  "roomBounds": {
+    "blender_min": [
+      -0.1,
+      -9.9,
+      -0.1
+    ],
+    "blender_max": [
+      10.1,
+      0.1,
+      7.0
+    ],
+    "min": [
+      -0.1,
+      -0.1,
+      -0.1
+    ],
+    "max": [
+      10.1,
+      7.0,
+      9.9
+    ],
+    "center": [
+      5.0,
+      3.5,
+      4.95
+    ],
+    "size": [
+      10.0,
+      7.0,
+      9.9
+    ]
+  },
+  "sections": {
+    "about": {
+      "exists": true,
+      "blenderObjectName": "Samsung Odyssey G8 Monitor 34inch",
+      "sectionName": "ABOUT THE CLUB",
+      "description": "Dual Gaming Curved Display Station",
+      "preferredSide": "right",
+      "bbox": {
+        "blender_min": [
+          5.583,
+          -0.536,
+          2.026
+        ],
+        "blender_max": [
+          6.702,
+          -0.098,
+          2.77
+        ],
+        "blender_center": [
+          6.142,
+          -0.317,
+          2.398
+        ],
+        "min": [
+          5.583,
+          2.026,
+          0.098
+        ],
+        "max": [
+          6.702,
+          2.77,
+          0.536
+        ],
+        "center": [
+          6.142,
+          2.398,
+          0.317
+        ],
+        "size": [
+          1.119,
+          0.744,
+          0.438
+        ]
+      },
+      "insideRoom": true
+    },
+    "projects": {
+      "exists": true,
+      "blenderObjectName": "Gaming Computer Case",
+      "sectionName": "PROJECTS & SHOWCASE",
+      "description": "Custom Liquid-Cooled RGB Rig",
+      "preferredSide": "left",
+      "bbox": {
+        "blender_min": [
+          7.002,
+          -1.579,
+          1.727
+        ],
+        "blender_max": [
+          7.458,
+          -0.871,
+          2.355
+        ],
+        "blender_center": [
+          7.23,
+          -1.225,
+          2.041
+        ],
+        "min": [
+          7.002,
+          1.727,
+          0.871
+        ],
+        "max": [
+          7.458,
+          2.355,
+          1.579
+        ],
+        "center": [
+          7.23,
+          2.041,
+          1.225
+        ],
+        "size": [
+          0.456,
+          0.628,
+          0.708
+        ]
+      },
+      "insideRoom": true
+    },
+    "events": {
+      "exists": true,
+      "blenderObjectName": "Cloud shelf",
+      "sectionName": "EVENTS & WORKSHOPS",
+      "description": "Floating Cloud LED Shelf & Game Collection",
+      "preferredSide": "left",
+      "bbox": {
+        "blender_min": [
+          9.915,
+          -5.241,
+          3.052
+        ],
+        "blender_max": [
+          10.089,
+          -1.979,
+          6.363
+        ],
+        "blender_center": [
+          10.002,
+          -3.61,
+          4.707
+        ],
+        "min": [
+          9.915,
+          3.052,
+          1.979
+        ],
+        "max": [
+          10.089,
+          6.363,
+          5.241
+        ],
+        "center": [
+          10.002,
+          4.707,
+          3.61
+        ],
+        "size": [
+          0.174,
+          3.311,
+          3.262
+        ]
+      },
+      "insideRoom": true
+    },
+    "learning": {
+      "exists": true,
+      "blenderObjectName": "Geometric Display Shelf",
+      "sectionName": "LEARNING & MENTORSHIP",
+      "description": "Modular Bookcase with 3D Design Library",
+      "preferredSide": "right",
+      "bbox": {
+        "blender_min": [
+          0.011,
+          -5.916,
+          0.009
+        ],
+        "blender_max": [
+          0.947,
+          -3.373,
+          5.644
+        ],
+        "blender_center": [
+          0.479,
+          -4.644,
+          2.826
+        ],
+        "min": [
+          0.011,
+          0.009,
+          3.373
+        ],
+        "max": [
+          0.947,
+          5.644,
+          5.916
+        ],
+        "center": [
+          0.479,
+          2.826,
+          4.644
+        ],
+        "size": [
+          0.936,
+          5.635,
+          2.543
+        ]
+      },
+      "insideRoom": true
+    },
+    "gallery": {
+      "exists": true,
+      "blenderObjectName": "Framed gaming art",
+      "sectionName": "COMMUNITY ART GALLERY",
+      "description": "Framed Wall Art Showcase",
+      "preferredSide": "right",
+      "bbox": {
+        "blender_min": [
+          -0.012,
+          -8.653,
+          4.344
+        ],
+        "blender_max": [
+          0.023,
+          -7.255,
+          6.441
+        ],
+        "blender_center": [
+          0.006,
+          -7.954,
+          5.393
+        ],
+        "min": [
+          -0.012,
+          4.344,
+          7.255
+        ],
+        "max": [
+          0.023,
+          6.441,
+          8.653
+        ],
+        "center": [
+          0.006,
+          5.393,
+          7.954
+        ],
+        "size": [
+          0.035,
+          2.097,
+          1.398
+        ]
+      },
+      "insideRoom": true
+    },
+    "team": {
+      "exists": true,
+      "blenderObjectName": "Gaming chair/chair",
+      "sectionName": "LEADERSHIP & CREATORS",
+      "description": "Ergonomic Creator Cockpit Chair",
+      "preferredSide": "right",
+      "bbox": {
+        "blender_min": [
+          4.524,
+          -3.882,
+          0.025
+        ],
+        "blender_max": [
+          6.074,
+          -2.224,
+          2.893
+        ],
+        "blender_center": [
+          5.299,
+          -3.053,
+          1.459
+        ],
+        "min": [
+          4.524,
+          0.025,
+          2.224
+        ],
+        "max": [
+          6.074,
+          2.893,
+          3.882
+        ],
+        "center": [
+          5.299,
+          1.459,
+          3.053
+        ],
+        "size": [
+          1.55,
+          2.868,
+          1.658
+        ]
+      },
+      "insideRoom": true
+    },
+    "community": {
+      "exists": true,
+      "blenderObjectName": "Next generation gaming chair concept",
+      "sectionName": "STUDIO COMMUNITY",
+      "description": "Cyber Lounge Pod & Battle Station",
+      "preferredSide": "left",
+      "bbox": {
+        "blender_min": [
+          6.555,
+          -8.037,
+          0.047
+        ],
+        "blender_max": [
+          10.035,
+          -4.836,
+          3.68
+        ],
+        "blender_center": [
+          8.295,
+          -6.437,
+          1.864
+        ],
+        "min": [
+          6.555,
+          0.047,
+          4.836
+        ],
+        "max": [
+          10.035,
+          3.68,
+          8.037
+        ],
+        "center": [
+          8.295,
+          1.864,
+          6.437
+        ],
+        "size": [
+          3.48,
+          3.633,
+          3.201
+        ]
+      },
+      "insideRoom": true
+    },
+    "join": {
+      "exists": true,
+      "blenderObjectName": "Gamer neon  sign",
+      "sectionName": "JOIN THE MATRIX",
+      "description": "PlayStation PlayStation Neon Light Wall",
+      "preferredSide": "right",
+      "bbox": {
+        "blender_min": [
+          1.047,
+          -0.197,
+          0.389
+        ],
+        "blender_max": [
+          2.722,
+          -0.04,
+          6.473
+        ],
+        "blender_center": [
+          1.884,
+          -0.118,
+          3.431
+        ],
+        "min": [
+          1.047,
+          0.389,
+          0.04
+        ],
+        "max": [
+          2.722,
+          6.473,
+          0.197
+        ],
+        "center": [
+          1.884,
+          3.431,
+          0.118
+        ],
+        "size": [
+          1.675,
+          6.084,
+          0.157
+        ]
+      },
+      "insideRoom": true
+    }
+  }
+}

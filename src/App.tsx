@@ -1,118 +1,105 @@
 import { useState } from "react";
 import { useSceneNavigation } from "./hooks/useSceneNavigation";
 import { ClubRoomScene } from "./scenes/ClubRoomScene";
-import { NavigationHUD } from "./components/navigation/NavigationHUD";
-import { SectionOverlay } from "./components/ui/SectionOverlay";
+import { HeaderNav } from "./components/navigation/HeaderNav";
+import { NavigationPill } from "./components/navigation/NavigationPill";
+import { NavigationDrawer } from "./components/navigation/NavigationDrawer";
+import { ContentPanel } from "./components/ui/ContentPanel";
 import { LoadingScreen } from "./components/ui/LoadingScreen";
-import { MenuModal } from "./components/ui/MenuModal";
-import { DebugPanel } from "./components/ui/DebugPanel";
+import { IntroOverlay } from "./components/ui/IntroOverlay";
 
 export function App() {
   const [hasEntered, setHasEntered] = useState(false);
 
   const {
+    navState,
+    setNavState,
     currentSectionIndex,
     currentSection,
     totalSections,
-    isIntroPlaying,
-    setIsIntroPlaying,
+    sections,
+    anchors,
+    overviewCam,
+    highlightedObject,
     isMenuOpen,
     setIsMenuOpen,
     isDebugOpen,
-    setIsDebugOpen,
-    isMuted,
-    toggleMute,
-    reducedMotion,
-    postProcessingEnabled,
-    setPostProcessingEnabled,
-    goToSection,
-    nextSection,
-    prevSection,
+    goTo,
+    next,
+    back,
+    home,
     toggleMenu,
-    toggleDebug,
+    onTransitionComplete,
   } = useSceneNavigation();
 
-  const handleEnterExperience = () => {
+  const handleEnter = () => {
     setHasEntered(true);
-    setIsIntroPlaying(true);
+    setNavState("intro");
   };
 
-  const handleIntroComplete = () => {
-    setIsIntroPlaying(false);
+  const handleSkipIntro = () => {
+    // After intro ends, go straight to overview (do not auto-start section 1)
+    setNavState("overview");
   };
 
   return (
-    <div style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#05030a" }}>
-      {/* 1. Loading / Boot Screen */}
-      {!hasEntered && (
-        <LoadingScreen onEnter={handleEnterExperience} />
-      )}
+    <div
+      style={{
+        position: "relative",
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
+        backgroundColor: "#05030a",
+      }}
+    >
+      {/* 1. Minimal Loading / Boot Screen */}
+      {!hasEntered && <LoadingScreen onEnter={handleEnter} />}
 
-      {/* 2. Main 3D Canvas Scene */}
+      {/* 2. Main 3D Studio Canvas Scene */}
       {hasEntered && (
         <>
           <ClubRoomScene
-            currentSectionIndex={currentSectionIndex}
-            onSelectSection={goToSection}
-            isIntroPlaying={isIntroPlaying}
-            onIntroComplete={handleIntroComplete}
-            reducedMotion={reducedMotion}
-            postProcessingEnabled={postProcessingEnabled}
-          />
-
-          {/* 3. Subtle Holographic Scanline Overlay */}
-          <div
-            className="scanlines"
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 30,
-              pointerEvents: "none",
-              opacity: 0.6,
-            }}
-          />
-
-          {/* 4. Navigation HUD (Active once entered) */}
-          <NavigationHUD
-            currentIndex={currentSectionIndex}
-            totalSections={totalSections}
-            onNext={nextSection}
-            onPrev={prevSection}
-            onSelectIndex={goToSection}
-            onOpenMenu={toggleMenu}
-            isMuted={isMuted}
-            onToggleMute={toggleMute}
-            onToggleDebug={toggleDebug}
+            navState={navState}
+            currentSection={currentSection}
+            overviewCamera={overviewCam}
+            anchors={anchors}
+            highlightedObject={highlightedObject}
             isDebugOpen={isDebugOpen}
+            onTransitionComplete={onTransitionComplete}
           />
 
-          {/* 5. Active Section Holographic UI Overlay (Hidden while intro assembly plays) */}
-          {!isIntroPlaying && (
-            <SectionOverlay
-              key={currentSection.id}
-              section={currentSection}
-              onNext={nextSection}
+          {/* 3. Top Header: Small wordmark with glowing purple dot + Menu button */}
+          <HeaderNav onOpenMenu={toggleMenu} />
+
+          {/* 4. Intro Overlay (Max 7s with SKIP button, transitions straight to overview) */}
+          {navState === "intro" && <IntroOverlay onSkip={handleSkipIntro} />}
+
+          {/* 5. Content Panel (Only visible in 'section' state, positioned opposite the object) */}
+          {navState === "section" && (
+            <ContentPanel section={currentSection} onNext={next} />
+          )}
+
+          {/* 6. Slim Glass Navigation Pill (8 dots + BACK + Title + NEXT + Home) */}
+          {navState !== "intro" && (
+            <NavigationPill
+              currentIndex={currentSectionIndex}
+              totalSections={totalSections}
+              currentSection={currentSection}
+              isOverview={navState === "overview"}
+              onNext={next}
+              onPrev={back}
+              onHome={home}
+              onSelectIndex={goTo}
             />
           )}
 
-          {/* 6. Navigation Matrix Menu Modal */}
-          <MenuModal
+          {/* 7. Right-Side Navigation Drawer */}
+          <NavigationDrawer
             isOpen={isMenuOpen}
             onClose={() => setIsMenuOpen(false)}
+            sections={sections}
             currentIndex={currentSectionIndex}
-            onSelectSection={goToSection}
-          />
-
-          {/* 7. Developer Debug Console */}
-          <DebugPanel
-            isOpen={isDebugOpen}
-            onClose={() => setIsDebugOpen(false)}
-            currentSection={currentSection}
-            currentIndex={currentSectionIndex}
-            isIntroPlaying={isIntroPlaying}
-            onSkipIntro={() => setIsIntroPlaying(false)}
-            postProcessingEnabled={postProcessingEnabled}
-            onTogglePostProcessing={() => setPostProcessingEnabled(!postProcessingEnabled)}
+            onSelectSection={goTo}
           />
         </>
       )}

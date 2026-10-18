@@ -1,3 +1,18 @@
+export interface BoundingBox {
+  min: [number, number, number];
+  max: [number, number, number];
+  center: [number, number, number];
+  size: [number, number, number];
+}
+
+export interface SectionOverride {
+  azimuthDeg?: number;
+  elevationDeg?: number;
+  distanceMultiplier?: number;
+  targetOffset?: [number, number, number];
+  preferredSide?: "left" | "right";
+}
+
 export interface SectionItem {
   id: string;
   index: number;
@@ -7,289 +22,286 @@ export interface SectionItem {
   objectName: string;
   tagline: string;
   description: string;
-  cameraPosition: [number, number, number];
-  cameraTarget: [number, number, number];
+  badge: string;
   accentColor: string;
   accentGlow: string;
-  badge: string;
+  preferredSide: "left" | "right";
+  override?: SectionOverride;
+  // Computed dynamically from anchors.json
+  cameraPosition: [number, number, number];
+  cameraTarget: [number, number, number];
+  bbox?: BoundingBox;
   stats?: { label: string; value: string }[];
   features?: string[];
-  interactiveCards?: {
-    title: string;
-    subtitle?: string;
-    description: string;
-    tag?: string;
-    linkText?: string;
-  }[];
+  cards?: { title: string; desc: string; tag?: string }[];
   ctaText?: string;
 }
 
-// In Blender coordinates (Z is Up, -Y is forward):
-// When exported to glTF (Three.js coordinates: Y is Up, -Z is forward):
-// three_X = blend_X
-// three_Y = blend_Z
-// three_Z = -blend_Y
-
-// Room center: blend_X = 5.0, blend_Y = -4.94, blend_Z = 3.5 -> three: [5.0, 3.5, 4.94]
-// Monitor: blend_X = 6.17, blend_Y = -0.28, blend_Z = 2.51 -> three: [6.17, 2.51, 0.28]
-// Desk: blend_X = 5.53, blend_Y = -0.91, blend_Z = 0.04 -> three: [5.53, 1.6, 0.91]
-// PC: blend_X = 7.23, blend_Y = -1.22, blend_Z = 1.73 -> three: [7.23, 1.73, 1.22]
-// Gamer Neon Sign / Shelf: blend_X = 1.87, blend_Y = -0.04, blend_Z = 2.61 -> three: [1.87, 2.61, 0.04]
-// Chair: blend_X = 5.26, blend_Y = -3.68, blend_Z = 2.73 -> three: [5.26, 2.73, 3.68]
-// Cloud Shelf / Games: blend_X = 10.09, blend_Y = -3.5, blend_Z = 4.59 -> three: [10.09, 4.59, 3.5]
-// Gaming Art Wall: blend_X = -0.01, blend_Y = -7.95, blend_Z = 5.39 -> three: [-0.01, 5.39, 7.95]
-
+// 8 Sections mapping directly to anchors.json objects
 export const SECTIONS: SectionItem[] = [
   {
     id: "about",
     index: 0,
     title: "ABOUT THE CLUB",
-    subtitle: "COLLEGE BLENDER & 3D ART COLLECTIVE",
+    subtitle: "COLLEGIATE 3D COLLECTIVE",
     objectId: "monitor",
-    objectName: "Samsung Odyssey G8 34\" Curved Gaming Display",
+    objectName: "Samsung Odyssey G8 Monitor 34inch",
     tagline: "Where imagination turns into three-dimensional reality.",
     description:
-      "We are a vibrant collegiate community of 3D artists, animators, environment designers, and VFX creators. From hard-surface mechanical modeling and procedural geometry nodes to cinematic lighting and real-time game assets, we empower students to push visual boundaries using Blender.",
-    cameraPosition: [6.17, 2.4, 2.4],
-    cameraTarget: [6.17, 2.15, 0.28],
-    accentColor: "#a855f7",
-    accentGlow: "rgba(168, 85, 247, 0.4)",
-    badge: "CORE_MATRIX // 01",
-    stats: [
-      { label: "Active Creators", value: "140+" },
-      { label: "Render Hours", value: "12,400+" },
-      { label: "Annual Projects", value: "35+" },
-      { label: "Workshops Held", value: "24+" },
+      "We are a collegiate community of 3D artists, animators, and VFX creators. From geometry nodes to cinematic lighting, we build worlds using Blender.",
+    badge: "01 / MATRIX",
+    accentColor: "#8b5cf6",
+    accentGlow: "rgba(139, 92, 246, 0.4)",
+    preferredSide: "right",
+    override: {
+      azimuthDeg: 25,
+      elevationDeg: 14,
+      distanceMultiplier: 1.35,
+    },
+    cameraPosition: [6.14, 2.7, 2.5],
+    cameraTarget: [6.14, 2.4, 0.32],
+    cards: [
+      { title: "Weekly Render Jams", desc: "Fast-paced modeling challenges with live feedback.", tag: "Weekly" },
+      { title: "Geometry Nodes Lab", desc: "Procedural asset generation & simulation workshops.", tag: "VFX" },
     ],
-    features: [
-      "Open to all skill levels from absolute beginners to advanced scripters",
-      "Hands-on weekly render jams, feedback critiques, and asset sharing",
-      "Collaborative group short films, game art, and architectural visualization",
-      "Industry guest sessions and portfolio mentorship",
-    ],
-    ctaText: "EXPLORE WHAT WE DO",
-  },
-  {
-    id: "what-we-do",
-    index: 1,
-    title: "WHAT WE DO",
-    subtitle: "CREATIVE DISCIPLINES & PIPELINES",
-    objectId: "workstation",
-    objectName: "Pro Gaming Battle Station & Desk Setup",
-    tagline: "Mastering the entire 3D production pipeline from scratch.",
-    description:
-      "Our club delves into every facet of the 3D art spectrum. We host intensive workshops, collaborative project sprints, and live render challenges that replicate real-world game studio and VFX studio workflows.",
-    cameraPosition: [5.2, 2.2, 3.2],
-    cameraTarget: [5.5, 1.5, 0.9],
-    accentColor: "#c084fc",
-    accentGlow: "rgba(192, 132, 252, 0.4)",
-    badge: "PIPELINE_MODULES // 02",
-    interactiveCards: [
-      {
-        title: "3D Modeling & Sculpting",
-        subtitle: "Hard Surface & Organic",
-        description: "Precision topology, CAD-style mechanical modeling, and high-resolution digital character sculpting.",
-        tag: "GEOMETRY",
-      },
-      {
-        title: "Shading & Texturing",
-        subtitle: "PBR & Stylized NPR",
-        description: "Procedural shader networks, UV unwrapping, baking, and hand-painted/anime style NPR materials.",
-        tag: "SHADING",
-      },
-      {
-        title: "Animation & Rigging",
-        subtitle: "Keyframe & Simulation",
-        description: "Character skeletal rigging, physics simulations (cloth, smoke, water), and cinematic camera directing.",
-        tag: "MOTION",
-      },
-      {
-        title: "Geometry Nodes & VFX",
-        subtitle: "Procedural Generation",
-        description: "Building automated procedural cities, sci-fi particle effects, and parametric asset generators.",
-        tag: "NODES",
-      },
-    ],
-    ctaText: "VIEW OUR PROJECTS",
+    ctaText: "DISCOVER PROJECTS",
   },
   {
     id: "projects",
-    index: 2,
-    title: "PROJECTS",
-    subtitle: "STUDENT SHOWCASE & BENCHMARKS",
+    index: 1,
+    title: "SHOWCASE RIGS",
+    subtitle: "CREATIVE & HARDWARE LAB",
     objectId: "pc",
-    objectName: "Liquid-Cooled RGB Gaming Rig",
-    tagline: "Pushing Cycles and Eevee Next to the absolute threshold.",
+    objectName: "Gaming Computer Case",
+    tagline: "High-performance rendering workstations powering our short films.",
     description:
-      "Explore featured artwork, student short films, environment dioramas, and sci-fi asset kits built entirely within our club ecosystem. Every term concludes with a club-wide community showcase.",
-    cameraPosition: [7.9, 2.2, 2.2],
-    cameraTarget: [7.23, 1.7, 1.22],
-    accentColor: "#8b5cf6",
-    accentGlow: "rgba(139, 92, 246, 0.4)",
-    badge: "RENDER_ARCHIVES // 03",
-    interactiveCards: [
-      {
-        title: "Project Neo-Tokyo 2099",
-        subtitle: "Cyberpunk Cyber Environment",
-        description: "A full modular sci-fi alleyway environment built with procedural neon signs and volumetric rain.",
-        tag: "ENVIRONMENT",
-      },
-      {
-        title: "Aegis Mech Drone",
-        subtitle: "Hard Surface Rigged Model",
-        description: "Custom mechanical robot with full inverse kinematics, hydraulic pistons, and damage maps.",
-        tag: "HARD SURFACE",
-      },
-      {
-        title: "Quantum Biome Simulation",
-        subtitle: "Geometry Nodes Forest",
-        description: "Procedural plant generation driven by math curves and dynamic wind simulations.",
-        tag: "GEO NODES",
-      },
+      "Our lab builds custom render nodes and real-time interactive experiences using Unreal Engine and Blender Cycles GPU acceleration.",
+    badge: "02 / HARDWARE",
+    accentColor: "#c084fc",
+    accentGlow: "rgba(192, 132, 252, 0.4)",
+    preferredSide: "left",
+    override: {
+      azimuthDeg: -22,
+      elevationDeg: 12,
+      distanceMultiplier: 1.3,
+    },
+    cameraPosition: [6.5, 2.4, 2.8],
+    cameraTarget: [7.23, 2.04, 1.23],
+    cards: [
+      { title: "Project CyberPulse", desc: "An open-source cyberpunk cinematic short in Blender 5.1.", tag: "Film" },
+      { title: "Asset Vault", desc: "Over 500 CC0 modular props built by club alumni.", tag: "Assets" },
     ],
-    ctaText: "DISCOVER UPCOMING EVENTS",
+    ctaText: "VIEW EVENTS",
   },
   {
     id: "events",
-    index: 3,
-    title: "EVENTS & WORKSHOPS",
-    subtitle: "COMPETITIONS, JAMS & MASTERCLASSES",
-    objectId: "portal",
-    objectName: "Cloud Shelf & Game Library",
-    tagline: "Learn live, build together, and compete for creative glory.",
+    index: 2,
+    title: "EVENTS & JAMS",
+    subtitle: "LIVE SESSIONS & WORKSHOPS",
+    objectId: "cloud_shelf",
+    objectName: "Cloud shelf",
+    tagline: "Regular hackathons, render sprints, and guest artist livestreams.",
     description:
-      "We host bi-weekly live masterclasses, beginner onboarding bootcamps, 48-hour Render Jam hackathons, and guest talks with industry 3D artists from game studios and visual effects houses.",
-    cameraPosition: [8.8, 3.8, 5.2],
-    cameraTarget: [10.09, 4.4, 3.5],
-    accentColor: "#ec4899",
-    accentGlow: "rgba(236, 72, 153, 0.4)",
-    badge: "TIMELINE_SYNC // 04",
-    interactiveCards: [
-      {
-        title: "Weekly 3D Render Jam",
-        subtitle: "Every Friday at 6:00 PM",
-        description: "A 2-hour rapid creation challenge around a secret surprise theme with live Discord streaming.",
-        tag: "WEEKLY",
-      },
-      {
-        title: "Zero to Hero Blender Bootcamp",
-        subtitle: "Semester Kickoff Workshop",
-        description: "4-session foundational crash course teaching viewport navigation, modifiers, and basic lighting.",
-        tag: "WORKSHOP",
-      },
-      {
-        title: "Annual 3D Art Expo",
-        subtitle: "Campus Exhibition",
-        description: "Interactive VR gallery showcasing physical 3D prints, student renders, and real-time web 3D demos.",
-        tag: "ANNUAL EXPO",
-      },
+      "Join our bi-weekly speed sculpts and weekend film challenges. Collaborate with peer creators across campus to build game-ready worlds.",
+    badge: "03 / SCHEDULE",
+    accentColor: "#38bdf8",
+    accentGlow: "rgba(56, 189, 248, 0.4)",
+    preferredSide: "left",
+    override: {
+      azimuthDeg: -30,
+      elevationDeg: 10,
+      distanceMultiplier: 1.2,
+    },
+    cameraPosition: [8.2, 4.2, 5.8],
+    cameraTarget: [10.0, 4.71, 3.61],
+    cards: [
+      { title: "Blender 48h Sprint", desc: "Theme-based 48-hour environment modeling jam.", tag: "Hackathon" },
+      { title: "Lighting Masterclass", desc: "ACES filmic color science & volumetrics deep dive.", tag: "Live" },
     ],
-    ctaText: "EXPLORE LEARNING PATHS",
+    ctaText: "EXPLORE CURRICULUM",
   },
   {
     id: "learning",
-    index: 4,
+    index: 3,
     title: "LEARNING HUB",
-    subtitle: "GAMER NEON SIGN & RESOURCE REPO",
-    objectId: "shelf",
-    objectName: "PlayStation Gamer Neon Wall Sign",
-    tagline: "Free curated resources, project templates, and shader libraries.",
+    subtitle: "CURATED 3D RESOURCES",
+    objectId: "display_shelf",
+    objectName: "Geometric Display Shelf",
+    tagline: "From beginner donut to advanced character rigging and simulations.",
     description:
-      "Club members gain unlimited access to our internal repository of curated tutorials, CC0 texture packs, node group presets, optimized base meshes, and studio-grade lighting setups.",
-    cameraPosition: [1.87, 2.6, 2.4],
-    cameraTarget: [1.87, 2.61, 0.04],
+      "Comprehensive roadmaps covering hard-surface modeling, sculpting, texture painting, topology optimization, and Python scripting.",
+    badge: "04 / ACADEMY",
     accentColor: "#06b6d4",
     accentGlow: "rgba(6, 182, 212, 0.4)",
-    badge: "KNOWLEDGE_BASE // 05",
-    features: [
-      "Curated 4-tier learning roadmap: Beginner, Intermediate, Advanced, Masterclass",
-      "Club asset vault with 500+ procedural shaders, kitbash parts, and HDRIs",
-      "One-on-one peer code review for Python scripts and Geometry Node setups",
-      "Discounted student certifications and software partner perks",
+    preferredSide: "right",
+    override: {
+      azimuthDeg: 28,
+      elevationDeg: 12,
+      distanceMultiplier: 1.25,
+    },
+    cameraPosition: [2.5, 3.2, 6.2],
+    cameraTarget: [0.48, 2.83, 4.64],
+    cards: [
+      { title: "Zero to Hero", desc: "4-week fast-track Blender interface & basics pathway.", tag: "Beginner" },
+      { title: "Shading Mastery", desc: "PBR node networks & procedural texture construction.", tag: "Advanced" },
+    ],
+    ctaText: "VIEW ART GALLERY",
+  },
+  {
+    id: "gallery",
+    index: 4,
+    title: "ART GALLERY",
+    subtitle: "STUDENT HIGHLIGHTS",
+    objectId: "framed_art",
+    objectName: "Framed gaming art",
+    tagline: "Exceptional concept art and renders produced by student members.",
+    description:
+      "Explore curated portfolio pieces showcased in student exhibitions, digital art festivals, and college design competitions.",
+    badge: "05 / ARCHIVE",
+    accentColor: "#ec4899",
+    accentGlow: "rgba(236, 72, 153, 0.4)",
+    preferredSide: "right",
+    override: {
+      azimuthDeg: 24,
+      elevationDeg: 8,
+      distanceMultiplier: 1.3,
+    },
+    cameraPosition: [2.8, 5.1, 8.8],
+    cameraTarget: [0.01, 5.39, 7.95],
+    cards: [
+      { title: "Neo-Kyoto Alley", desc: "Cyberpunk diorama rendered in EEVEE Next.", tag: "Featured" },
+      { title: "Bionic Exosuit", desc: "Hard-surface subdivision mechanical modeling.", tag: "Sci-Fi" },
     ],
     ctaText: "MEET THE TEAM",
   },
   {
     id: "team",
     index: 5,
-    title: "THE SQUAD",
-    subtitle: "STUDENT LEADS & COMMUNITY CORES",
+    title: "CREATOR SQUAD",
+    subtitle: "STUDIO LEADERSHIP",
     objectId: "chair",
-    objectName: "Next-Gen Gaming Chair",
-    tagline: "Driven by passionate students across diverse creative majors.",
+    objectName: "Gaming chair/chair",
+    tagline: "Student mentors and project leads guiding our creative community.",
     description:
-      "Our team consists of passionate student leads spanning 3D generalists, technical artists, event coordinators, and graphic designers united by a love for open-source 3D technology.",
-    cameraPosition: [5.26, 2.8, 5.6],
-    cameraTarget: [5.26, 2.0, 3.68],
+      "Our team coordinates workshops, manages render hardware, and organizes collaboration pipelines for interdisciplinary student films.",
+    badge: "06 / SQUAD",
     accentColor: "#a855f7",
     accentGlow: "rgba(168, 85, 247, 0.4)",
-    badge: "OPERATIVES // 06",
-    interactiveCards: [
-      {
-        title: "Lead 3D Generalist",
-        subtitle: "Environment & Hard Surface",
-        description: "Guides club curriculum and leads large-scale collaborative animation shorts.",
-        tag: "LEAD",
-      },
-      {
-        title: "Technical Artist & Node Specialist",
-        subtitle: "Procedural Systems & Shaders",
-        description: "Hosts advanced Geometry Node labs and optimizes rendering pipelines.",
-        tag: "TECH ART",
-      },
-      {
-        title: "Events & Community Director",
-        subtitle: "Workshops & Competitions",
-        description: "Orchestrates Render Jams, guest artist keynotes, and student exhibitions.",
-        tag: "COMMUNITY",
-      },
+    preferredSide: "right",
+    override: {
+      azimuthDeg: 25,
+      elevationDeg: 16,
+      distanceMultiplier: 1.3,
+    },
+    cameraPosition: [6.8, 2.4, 5.0],
+    cameraTarget: [5.3, 1.46, 3.05],
+    cards: [
+      { title: "Lead Director", desc: "Alex Rivera — Environment & Level Design", tag: "Mentor" },
+      { title: "Tech Art Lead", desc: "Maya Lin — Geometry Nodes & Rigging", tag: "Mentor" },
     ],
-    ctaText: "CHECK OUR COMMUNITY",
+    ctaText: "COMMUNITY HUB",
   },
   {
     id: "community",
     index: 6,
-    title: "COMMUNITY",
-    subtitle: "DISCORD, CRITIQUES & COLLABORATION",
-    objectId: "art",
-    objectName: "Framed Gaming Art Gallery Wall",
-    tagline: "A 24/7 creative hub where feedback sparks constant growth.",
+    title: "COMMUNITY POD",
+    subtitle: "COLLABORATION LOUNGE",
+    objectId: "concept_chair",
+    objectName: "Next generation gaming chair concept",
+    tagline: "A lively digital and in-person space for creative discussions.",
     description:
-      "Our Discord server is the pulsing heart of the club. Share your work-in-progress renders, get constructive feedback from senior members, collaborate on game jams, and hang out in voice channels.",
-    cameraPosition: [1.8, 4.2, 7.2],
-    cameraTarget: [-0.01, 5.0, 7.95],
+      "Connect with 150+ members on Discord for daily critiques, asset drops, study streams, and game development game nights.",
+    badge: "07 / NETWORK",
     accentColor: "#f59e0b",
     accentGlow: "rgba(245, 158, 11, 0.4)",
-    badge: "NETWORK_NODE // 07",
-    stats: [
-      { label: "Discord Members", value: "850+" },
-      { label: "Weekly Critiques", value: "50+" },
-      { label: "Voice Hangouts", value: "Daily" },
-      { label: "Collab Projects", value: "12" },
+    preferredSide: "left",
+    override: {
+      azimuthDeg: -25,
+      elevationDeg: 14,
+      distanceMultiplier: 1.25,
+    },
+    cameraPosition: [6.5, 2.8, 8.2],
+    cameraTarget: [8.3, 1.86, 6.44],
+    cards: [
+      { title: "Campus Discord", desc: "Active voice channels, stream parties, and tech help.", tag: "24/7" },
+      { title: "Render Farm Co-op", desc: "Distributed background rendering for member short films.", tag: "Compute" },
     ],
-    features: [
-      "Dedicated #wip-critique channel for frame-by-frame feedback",
-      "Resource share channels for free add-ons, brushes, and alpha textures",
-      "Late-night virtual render-and-chill co-working sessions",
-      "Showcase channel linked to our social media highlights",
-    ],
-    ctaText: "READY TO JOIN?",
+    ctaText: "BECOME A MEMBER",
   },
   {
     id: "join",
     index: 7,
-    title: "JOIN THE CLUB",
-    subtitle: "BECOME PART OF THE CREATIVE REVOLUTION",
-    objectId: "overview",
-    objectName: "Full Virtual Gaming Room Hub",
-    tagline: "No prior experience required. Just your curiosity and passion.",
+    title: "JOIN THE MATRIX",
+    subtitle: "APPLY FOR MEMBERSHIP",
+    objectId: "neon_sign",
+    objectName: "Gamer neon  sign",
+    tagline: "Free membership for all enrolled students. No prior experience needed.",
     description:
-      "Whether you've never touched a 3D vertex before or you're already writing custom GLSL shaders, there is a place for you in the Blender Club. Join our Discord, attend our next orientation, and start building worlds.",
-    cameraPosition: [3.8, 4.5, 9.2],
-    cameraTarget: [5.0, 2.2, 4.0],
+      "Get instant access to our asset repository, Discord channels, workshop schedules, and lab workstations.",
+    badge: "08 / ENLIST",
     accentColor: "#10b981",
     accentGlow: "rgba(16, 185, 129, 0.4)",
-    badge: "ACCESS_PORTAL // 08",
-    ctaText: "INITIALIZE MEMBERSHIP",
+    preferredSide: "right",
+    override: {
+      azimuthDeg: 26,
+      elevationDeg: 10,
+      distanceMultiplier: 1.3,
+    },
+    cameraPosition: [3.2, 3.6, 2.4],
+    cameraTarget: [1.88, 3.43, 0.12],
+    cards: [
+      { title: "Instant Access", desc: "Immediate invitation to our Discord and resource cloud.", tag: "Free" },
+      { title: "Portfolio Review", desc: "Personal 1-on-1 mentorship for college portfolios.", tag: "VIP" },
+    ],
+    ctaText: "BACK TO OVERVIEW",
   },
 ];
+
+// Compute camera framing dynamically given bounding box and FOV
+export function computeFramingCamera(
+  bbox: BoundingBox,
+  fov: number = 48,
+  override?: SectionOverride
+): { position: [number, number, number]; target: [number, number, number] } {
+  const center = bbox.center;
+  const size = bbox.size;
+
+  // Max dimension of the bounding box
+  const maxDim = Math.max(size[0], size[1], size[2]);
+  const fovRad = (fov * Math.PI) / 180;
+  
+  // Base distance using FOV formula: bbox size / (2 * tan(fov/2)) * 1.4
+  const baseDistance = (maxDim / (2 * Math.tan(fovRad / 2))) * 1.4;
+  const dist = baseDistance * (override?.distanceMultiplier ?? 1.25);
+
+  // Azimuth & Elevation angles
+  const azimuthRad = ((override?.azimuthDeg ?? 25) * Math.PI) / 180;
+  const elevationRad = ((override?.elevationDeg ?? 12) * Math.PI) / 180;
+
+  // Camera direction from open side of room (+Z in glTF coordinates is towards open front)
+  const dx = dist * Math.sin(azimuthRad) * Math.cos(elevationRad);
+  const dy = dist * Math.sin(elevationRad);
+  const dz = dist * Math.cos(azimuthRad) * Math.cos(elevationRad);
+
+  const targetOffset = override?.targetOffset ?? [0, 0, 0];
+  const target: [number, number, number] = [
+    center[0] + targetOffset[0],
+    center[1] + targetOffset[1],
+    center[2] + targetOffset[2],
+  ];
+
+  const position: [number, number, number] = [
+    target[0] + dx,
+    target[1] + dy,
+    target[2] + dz,
+  ];
+
+  return { position, target };
+}
+
+// Global overview camera computed from room bounding box
+export const OVERVIEW_CAMERA = {
+  // Room center is [5.0, 3.5, 4.95], open front corner is at X ~ 5.0, Y ~ 5.8, Z ~ 12.8
+  position: [5.0, 5.8, 12.8] as [number, number, number],
+  target: [5.0, 3.0, 4.5] as [number, number, number],
+};

@@ -1,145 +1,95 @@
-import React, { useEffect, useState } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import React from "react";
+import { Canvas } from "@react-three/fiber";
+import { Environment, AdaptiveDpr, PerformanceMonitor } from "@react-three/drei";
 import * as THREE from "three";
-import gsap from "gsap";
-import { GamingRoomModel } from "../components/3d/GamingRoomModel";
+import { UnifiedRoomModel } from "../components/3d/UnifiedRoomModel";
 import { SceneLighting } from "../components/3d/SceneLighting";
 import { ParticleField } from "../components/3d/ParticleField";
 import { CameraController } from "../components/3d/CameraController";
+import { DebugAnchorOverlay } from "../components/3d/DebugAnchorOverlay";
 import { PostProcessingEffects } from "../components/3d/PostProcessingEffects";
-import { SECTIONS } from "../data/sections";
-import { SCENE_CONFIG } from "../config/sceneConfig";
+import type { NavState, AnchorsData } from "../hooks/useSceneNavigation";
+import type { SectionItem } from "../data/sections";
 
 interface ClubRoomSceneProps {
-  currentSectionIndex: number;
-  onSelectSection: (index: number) => void;
-  isIntroPlaying: boolean;
-  onIntroComplete: () => void;
+  navState: NavState;
+  currentSection: SectionItem;
+  overviewCamera: { position: [number, number, number]; target: [number, number, number] };
+  anchors: AnchorsData | null;
+  highlightedObject: string | null;
+  isDebugOpen: boolean;
+  onTransitionComplete: (state: "overview" | "section") => void;
   reducedMotion?: boolean;
   postProcessingEnabled?: boolean;
 }
 
-// Inner canvas controller that handles the intro assembly sequence
-const IntroOrchestrator: React.FC<{
-  isIntroPlaying: boolean;
-  onIntroComplete: () => void;
-  reducedMotion: boolean;
-}> = ({
-  isIntroPlaying,
-  onIntroComplete,
-  reducedMotion,
-}) => {
-  const { camera } = useThree();
-
-  useEffect(() => {
-    if (!isIntroPlaying) return;
-
-    const firstSec = SECTIONS[0];
-
-    if (reducedMotion) {
-      camera.position.set(...firstSec.cameraPosition);
-      camera.lookAt(...firstSec.cameraTarget);
-      onIntroComplete();
-      return;
-    }
-
-    // Set elevated cinematic vantage point inside the room
-    camera.position.set(5.0, 4.2, 5.5);
-    camera.lookAt(6.17, 2.15, 0.28);
-
-    const stateObj = {
-      camX: 5.0,
-      camY: 4.2,
-      camZ: 5.5,
-      targetX: 6.17,
-      targetY: 2.15,
-      targetZ: 0.28,
-    };
-
-    const tl = gsap.timeline({
-      onUpdate: () => {
-        camera.position.set(stateObj.camX, stateObj.camY, stateObj.camZ);
-        camera.lookAt(stateObj.targetX, stateObj.targetY, stateObj.targetZ);
-      },
-      onComplete: () => {
-        onIntroComplete();
-      },
-    });
-
-    // Camera sweeps smoothly into Section 01 (Samsung Odyssey Display)
-    tl.to(stateObj, {
-      camX: firstSec.cameraPosition[0],
-      camY: firstSec.cameraPosition[1],
-      camZ: firstSec.cameraPosition[2],
-      targetX: firstSec.cameraTarget[0],
-      targetY: firstSec.cameraTarget[1],
-      targetZ: firstSec.cameraTarget[2],
-      duration: 2.4,
-      ease: "power2.inOut",
-    }, 0.2);
-
-    return () => {
-      tl.kill();
-    };
-  }, [isIntroPlaying, reducedMotion, onIntroComplete, camera]);
-
-  return null;
-};
-
 export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
-  currentSectionIndex,
-  onSelectSection,
-  isIntroPlaying,
-  onIntroComplete,
+  navState,
+  currentSection,
+  overviewCamera,
+  anchors,
+  highlightedObject,
+  isDebugOpen,
+  onTransitionComplete,
   reducedMotion = false,
   postProcessingEnabled = true,
 }) => {
-  const currentSection = SECTIONS[currentSectionIndex];
-
   return (
     <div style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}>
       <Canvas
         camera={{
-          fov: SCENE_CONFIG.cameraDefaults.fov,
-          near: SCENE_CONFIG.cameraDefaults.near,
-          far: SCENE_CONFIG.cameraDefaults.far,
-          position: [6.17, 2.4, 2.4],
+          fov: 48,
+          near: 0.1,
+          far: 80,
+          position: overviewCamera.position,
         }}
         gl={{
           antialias: true,
           powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.25,
+          toneMappingExposure: 1.2,
+          outputColorSpace: THREE.SRGBColorSpace,
         }}
         dpr={[1, 1.5]}
       >
+        <PerformanceMonitor />
+        <AdaptiveDpr pixelated={false} />
+
         <color attach="background" args={["#05030a"]} />
 
+        {/* Night environment preset at low intensity so PBR materials never render black */}
+        <Environment preset="night" environmentIntensity={0.35} />
+
+        {/* Focused Key Lights & Neon Floods (Max 3-4 lights, no point-light shadows) */}
         <SceneLighting
           assembled={true}
-          activeAccentColor={currentSection.accentColor}
+          activeAccentColor={currentSection?.accentColor ?? "#8b5cf6"}
         />
 
+        {/* Subtle floating cyber dust particles */}
         <ParticleField />
 
-        {/* Real Textured GamingRoom.blend 3D Environment & Objects */}
-        <GamingRoomModel
-          activeSectionId={currentSection.id}
-          onSelectSection={onSelectSection}
-        />
+        {/* Load room.glb ONCE at origin [0,0,0] - NO manual repositioning */}
+        <UnifiedRoomModel highlightedObjectName={highlightedObject} />
 
-        <IntroOrchestrator
-          isIntroPlaying={isIntroPlaying}
-          onIntroComplete={onIntroComplete}
-          reducedMotion={reducedMotion}
-        />
+        {/* Debug Bounding Boxes & Labels Overlay (Toggle with Key G) */}
+        {isDebugOpen && (
+          <DebugAnchorOverlay
+            anchors={anchors}
+            activeSectionId={currentSection?.id}
+          />
+        )}
 
+        {/* Single Predictable GSAP Camera Timeline Controller */}
         <CameraController
-          currentSectionIndex={currentSectionIndex}
-          isIntroPlaying={isIntroPlaying}
+          navState={navState}
+          currentSection={currentSection}
+          overviewCamera={overviewCamera}
+          onTransitionComplete={onTransitionComplete}
           reducedMotion={reducedMotion}
         />
 
+        {/* High performance bloom + vignette pass */}
         <PostProcessingEffects enabled={postProcessingEnabled} />
       </Canvas>
     </div>

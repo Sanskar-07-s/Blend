@@ -1,91 +1,151 @@
 import React, { useEffect, useRef } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { SECTIONS } from "../../data/sections";
-import { SCENE_CONFIG } from "../../config/sceneConfig";
+import gsap from "gsap";
+import type { NavState } from "../../hooks/useSceneNavigation";
+import type { SectionItem } from "../../data/sections";
 
 interface CameraControllerProps {
-  currentSectionIndex: number;
-  isIntroPlaying: boolean;
+  navState: NavState;
+  currentSection: SectionItem;
+  overviewCamera: { position: [number, number, number]; target: [number, number, number] };
+  onTransitionComplete: (state: "overview" | "section") => void;
   reducedMotion?: boolean;
 }
 
+// Memory allocation hygiene: static reusable vectors
+const _tempCamTarget = new THREE.Vector3();
+const _lookAtTarget = new THREE.Vector3();
+const _mouseTarget = new THREE.Vector2();
+const _mouseCurrent = new THREE.Vector2();
+
 export const CameraController: React.FC<CameraControllerProps> = ({
-  currentSectionIndex,
-  isIntroPlaying,
+  navState,
+  currentSection,
+  overviewCamera,
+  onTransitionComplete,
   reducedMotion = false,
 }) => {
   const { camera } = useThree();
+  const currentTween = useRef<gsap.core.Timeline | null>(null);
 
-  // Mouse parallax tracker with ultra-smooth low-pass filter
-  const mouseTarget = useRef({ x: 0, y: 0 });
-  const mouseCurrent = useRef({ x: 0, y: 0 });
+  // Keep track of current camera look-at position in 3D
+  const currentLookAt = useRef(new THREE.Vector3(...overviewCamera.target));
 
-  // 3D camera vector targets and current interpolated state
-  const targetCamPos = useRef(new THREE.Vector3(...SCENE_CONFIG.cameraDefaults.overviewPosition));
-  const targetLookAt = useRef(new THREE.Vector3(...SCENE_CONFIG.cameraDefaults.overviewTarget));
-  const currentLookAt = useRef(new THREE.Vector3(...SCENE_CONFIG.cameraDefaults.overviewTarget));
-
-  // Sync with current section target
-  useEffect(() => {
-    if (isIntroPlaying) return;
-
-    const section = SECTIONS[currentSectionIndex];
-    if (!section) return;
-
-    targetCamPos.current.set(...section.cameraPosition);
-    targetLookAt.current.set(...section.cameraTarget);
-
-    if (reducedMotion) {
-      camera.position.set(...section.cameraPosition);
-      currentLookAt.current.set(...section.cameraTarget);
-      camera.lookAt(currentLookAt.current);
-    }
-  }, [currentSectionIndex, isIntroPlaying, reducedMotion, camera]);
-
-  // Track window mouse movement
+  // 1. Mouse parallax setup (only allowed while idle in 'section' or 'overview')
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      mouseTarget.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
-      mouseTarget.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
+      // Disabled during transitions, intro, or loading
+      if (navState !== "section" && navState !== "overview") return;
+      _mouseTarget.x = (e.clientX / window.innerWidth - 0.5) * 2;
+      _mouseTarget.y = (e.clientY / window.innerHeight - 0.5) * 2;
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  }, [navState]);
 
+  // 2. Predictable GSAP Camera Transitions (Single Source of Camera Motion)
+  useEffect(() => {
+    if (navState === "loading" || navState === "intro") return;
+
+    // Determine target coordinates
+    const isGoingToOverview = navState === "overview" || (navState === "transitioning" && currentSection === null);
+    const targetPos = isGoingToOverview ? overviewCamera.position : currentSection.cameraPosition;
+    const targetLook = isGoingToOverview ? overviewCamera.target : currentSection.cameraTarget;
+
+    // Kill any existing timeline
+    if (currentTween.current) {
+      currentTween.current.kill();
+      currentTween.current = null;
+    }
+
+    if (reducedMotion) {
+      camera.position.set(...targetPos);
+      currentLookAt.current.set(...targetLook);
+      camera.lookAt(currentLookAt.current);
+      onTransitionComplete(isGoingToOverview ? "overview" : "section");
+      return;
+    }
+
+    // Camera proxy object for smooth timeline tween
+    const camProxy = {
+      x: camera.position.x,
+      y: camera.position.y,
+      z: camera.position.z,
+      targetX: currentLookAt.current.x,
+      targetY: currentLookAt.current.y,
+      targetZ: currentLookAt.current.z,
+    };
+
+    const tl = gsap.timeline({
+      onUpdate: () => {
+        camera.position.set(camProxy.x, camProxy.y, camProxy.z);
+        currentLookAt.current.set(camProxy.targetX, camProxy.targetY, camProxy.targetZ);
+        camera.lookAt(currentLookAt.current);
+      },
+      onComplete: () => {
+        onTransitionComplete(isGoingToOverview ? "overview" : "section");
+        currentTween.current = null;
+      },
+    });
+
+    currentTween.current = tl;
+
+    // Transition timing: 1.8s power3.inOut with parabolic arc (0.35 unit raise at midpoint)
+    const arcHeight = 0.35;
+    const midY = Math.max(camProxy.y, targetPos[1]) + arcHeight;
+
+    // X and Z glide smoothly with power3.inOut
+    tl.to(camProxy, {
+      x: targetPos[0],
+      z: targetPos[2],
+      targetX: targetLook[0],
+      targetY: targetLook[1],
+      targetZ: targetLook[2],
+      duration: 1.8,
+      ease: "power3.inOut",
+    }, 0);
+
+    // Y raises at midpoint to clear furniture / room objects
+    tl.to(camProxy, {
+      y: midY,
+      duration: 0.9,
+      ease: "power2.out",
+    }, 0);
+
+    tl.to(camProxy, {
+      y: targetPos[1],
+      duration: 0.9,
+      ease: "power2.in",
+    }, 0.9);
+
+    return () => {
+      if (currentTween.current) {
+        currentTween.current.kill();
+      }
+    };
+  }, [navState, currentSection, overviewCamera, reducedMotion, camera, onTransitionComplete]);
+
+  // 3. Subtle frame-rate independent mouse parallax (idle only, max 0.03 units)
   useFrame((_, delta) => {
-    if (isIntroPlaying) return;
+    if (navState !== "section" && navState !== "overview") return;
 
-    // Clamp delta between 1/120s and 1/30s to prevent uneven frame pacing
     const safeDelta = Math.min(Math.max(delta, 0.008), 0.033);
+    const damp = 1 - Math.exp(-3.0 * safeDelta);
 
-    // Cinematic exponential damping:
-    // lambda = 2.4 for camera position produces a smooth cinematic glide
-    // lambda = 3.0 for lookAt target ensures steady, elegant framing
-    const posDampFactor = 1 - Math.exp(-2.4 * safeDelta);
-    const lookDampFactor = 1 - Math.exp(-3.0 * safeDelta);
-    const mouseDampFactor = 1 - Math.exp(-3.5 * safeDelta);
+    _mouseCurrent.x += (_mouseTarget.x - _mouseCurrent.x) * damp;
+    _mouseCurrent.y += (_mouseTarget.y - _mouseCurrent.y) * damp;
 
-    // 1. Decoupled, ultra-soft mouse parallax
-    mouseCurrent.current.x += (mouseTarget.current.x - mouseCurrent.current.x) * mouseDampFactor;
-    mouseCurrent.current.y += (mouseTarget.current.y - mouseCurrent.current.y) * mouseDampFactor;
+    const maxParallax = 0.03;
+    const offsetX = _mouseCurrent.x * maxParallax;
+    const offsetY = -_mouseCurrent.y * maxParallax;
 
-    const parallaxFactor = 0.04; // Gentle floating parallax without camera jitter
-    const offsetX = mouseCurrent.current.x * parallaxFactor;
-    const offsetY = -mouseCurrent.current.y * parallaxFactor;
-
-    // 2. Cinematic continuous camera position interpolation
-    camera.position.x += (targetCamPos.current.x + offsetX - camera.position.x) * posDampFactor;
-    camera.position.y += (targetCamPos.current.y + offsetY - camera.position.y) * posDampFactor;
-    camera.position.z += (targetCamPos.current.z - camera.position.z) * posDampFactor;
-
-    // 3. Cinematic continuous lookAt target interpolation
-    currentLookAt.current.x += (targetLookAt.current.x + offsetX * 0.15 - currentLookAt.current.x) * lookDampFactor;
-    currentLookAt.current.y += (targetLookAt.current.y + offsetY * 0.15 - currentLookAt.current.y) * lookDampFactor;
-    currentLookAt.current.z += (targetLookAt.current.z - currentLookAt.current.z) * lookDampFactor;
-
-    camera.lookAt(currentLookAt.current);
+    // Apply micro offset to lookAt without touching position timeline
+    _lookAtTarget.copy(currentLookAt.current);
+    _lookAtTarget.x += offsetX;
+    _lookAtTarget.y += offsetY;
+    camera.lookAt(_lookAtTarget);
   });
 
   return null;
