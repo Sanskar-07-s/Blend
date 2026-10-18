@@ -1,0 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: #05030a;
+  --bg-secondary: #0b0718;
+  --neon-purple: #8b5cf6;
+  --neon-violet: #a855f7;
+  --neon-magenta: #c084fc;
+  --neon-cyan: #06b6d4;
+  --neon-emerald: #10b981;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --glass-bg: rgba(13, 9, 28, 0.75);
+  --glass-border: rgba(168, 85, 247, 0.28);
+  --glass-glow: rgba(168, 85, 247, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-orbitron {
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.font-mono-tech {
+  font-family: 'Space Grotesk', monospace;
+}
+
+/* Glassmorphic Cyber Panels */
+.cyber-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.65), 
+              inset 0 0 16px var(--glass-glow);
+  position: relative;
+}
+
+.cyber-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-violet), transparent);
+}
+
+/* Corner Tech Brackets */
+.cyber-corner-bracket {
+  position: relative;
+}
+
+.cyber-corner-bracket::before,
+.cyber-corner-bracket::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--neon-violet);
+  pointer-events: none;
+}
+
+.cyber-corner-bracket::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid var(--neon-violet);
+  border-left: 2px solid var(--neon-violet);
+}
+
+.cyber-corner-bracket::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 2px solid var(--neon-violet);
+  border-right: 2px solid var(--neon-violet);
+}
+
+/* Hologram Scanlines */
+.scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 38, 0) 50%, 
+    rgba(0, 0, 0, 0.35) 50%
+  ), 
+  linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+/* Sci-fi Glow Button */
+.cyber-btn {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 0.65rem 1.4rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cyber-btn:hover {
+  background: rgba(168, 85, 247, 0.35);
+  border-color: #c084fc;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.5), inset 0 0 10px rgba(192, 132, 252, 0.3);
+  transform: translateY(-1px);
+}
+
+.cyber-btn:active {
+  transform: translateY(1px);
+}
+
+.cyber-btn-primary {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.7), rgba(168, 85, 247, 0.85));
+  border: 1px solid #c084fc;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+}
+
+.cyber-btn-primary:hover {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.9), rgba(192, 132, 252, 1));
+  box-shadow: 0 0 28px rgba(192, 132, 252, 0.7);
+}
+
+/* Tech Grid Background */
+.tech-grid {
+  background-image: 
+    linear-gradient(to right, rgba(139, 92, 246, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(139, 92, 246, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Pulse animation */
+@keyframes neon-pulse {
+  0%, 100% {
+    opacity: 0.9;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 5px rgba(168, 85, 247, 0.2);
+  }
+}
+
+.animate-neon-pulse {
+  animation: neon-pulse 2.5s infinite ease-in-out;
+}
+
+/* Smooth UI fade in */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom Scrollbar for inner UI cards */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(11, 7, 24, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(192, 132, 252, 0.8);
+}
+
+/* Reduced Motion Mode Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
