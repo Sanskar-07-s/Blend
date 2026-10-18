@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BLENDER CLUB // 3D Interactive Cyber Studio</title>
     <meta name="description" content="Enter the interactive 3D futuristic gaming room & Blender studio for the College Blender Club." />
-    <!-- Futuristic Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Inline SVG Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+    <!-- Preload room.glb with fetch crossorigin -->
+    <link rel="preload" href="/models/room.glb" as="fetch" type="model/gltf-binary" crossorigin />
     <style>
       body {
         margin: 0;
         padding: 0;
         background-color: #05030a;
-        color: #f1f0fb;
+        color: #f5f3ff;
         overflow: hidden;
         user-select: none;
         -webkit-user-select: none;
-        font-family: 'Rajdhani', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       }
       #root {
         width: 100vw;
@@ -28,7 +28,7 @@
       }
     </style>
   </head>
-  <body>
+  <body data-nav-state="loading" data-section="">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

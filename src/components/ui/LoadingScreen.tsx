@@ -2,21 +2,23 @@ import React, { useEffect, useState } from "react";
 
 interface LoadingScreenProps {
   onEnter: () => void;
+  isReadyToEnter?: boolean;
 }
 
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onEnter }) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({
+  onEnter,
+  isReadyToEnter = false,
+}) => {
   const [progress, setProgress] = useState(0);
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(timer);
-          setIsReady(true);
           return 100;
         }
-        return prev + 15;
+        return prev + 20;
       });
     }, 100);
 
@@ -84,7 +86,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onEnter }) => {
         >
           <div
             style={{
-              width: `${progress}%`,
+              width: `${isReadyToEnter ? 100 : progress}%`,
               height: "100%",
               background: "linear-gradient(90deg, #8b5cf6, #c084fc)",
               boxShadow: "0 0 10px #c084fc",
@@ -94,7 +96,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onEnter }) => {
         </div>
 
         {/* ENTER Button */}
-        {isReady && (
+        {(isReadyToEnter || progress >= 100) && (
           <button
             onClick={onEnter}
             aria-label="Enter Studio"

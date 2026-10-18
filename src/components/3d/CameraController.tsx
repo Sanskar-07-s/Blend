@@ -5,37 +5,39 @@ import gsap from "gsap";
 import type { NavState } from "../../hooks/useSceneNavigation";
 import type { SectionItem } from "../../data/sections";
 
+gsap.ticker.lagSmoothing(0);
+
 interface CameraControllerProps {
   navState: NavState;
+  isGoingOverview?: boolean;
   currentSection: SectionItem;
   overviewCamera: { position: [number, number, number]; target: [number, number, number] };
   onTransitionComplete: (state: "overview" | "section") => void;
   reducedMotion?: boolean;
 }
 
-// Memory allocation hygiene: static reusable vectors
-const _tempCamTarget = new THREE.Vector3();
-const _lookAtTarget = new THREE.Vector3();
+const _startCamPos = new THREE.Vector3();
+const _targetCamPos = new THREE.Vector3();
+const _startLookAt = new THREE.Vector3();
+const _targetLookAt = new THREE.Vector3();
+const _currentLookAt = new THREE.Vector3();
+const _tempLook = new THREE.Vector3();
 const _mouseTarget = new THREE.Vector2();
 const _mouseCurrent = new THREE.Vector2();
 
 export const CameraController: React.FC<CameraControllerProps> = ({
   navState,
+  isGoingOverview = false,
   currentSection,
   overviewCamera,
   onTransitionComplete,
   reducedMotion = false,
 }) => {
   const { camera } = useThree();
-  const currentTween = useRef<gsap.core.Timeline | null>(null);
+  const currentTimeline = useRef<gsap.core.Timeline | null>(null);
 
-  // Keep track of current camera look-at position in 3D
-  const currentLookAt = useRef(new THREE.Vector3(...overviewCamera.target));
-
-  // 1. Mouse parallax setup (only allowed while idle in 'section' or 'overview')
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Disabled during transitions, intro, or loading
       if (navState !== "section" && navState !== "overview") return;
       _mouseTarget.x = (e.clientX / window.innerWidth - 0.5) * 2;
       _mouseTarget.y = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -45,89 +47,80 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [navState]);
 
-  // 2. Predictable GSAP Camera Transitions (Single Source of Camera Motion)
   useEffect(() => {
     if (navState === "loading" || navState === "intro") return;
 
-    // Determine target coordinates
-    const isGoingToOverview = navState === "overview" || (navState === "transitioning" && currentSection === null);
+    const isGoingToOverview = navState === "overview" || isGoingOverview;
     const targetPos = isGoingToOverview ? overviewCamera.position : currentSection.cameraPosition;
     const targetLook = isGoingToOverview ? overviewCamera.target : currentSection.cameraTarget;
 
-    // Kill any existing timeline
-    if (currentTween.current) {
-      currentTween.current.kill();
-      currentTween.current = null;
+    if (currentTimeline.current) {
+      currentTimeline.current.kill();
+      currentTimeline.current = null;
     }
 
     if (reducedMotion) {
       camera.position.set(...targetPos);
-      currentLookAt.current.set(...targetLook);
-      camera.lookAt(currentLookAt.current);
+      _currentLookAt.set(...targetLook);
+      camera.lookAt(_currentLookAt);
       onTransitionComplete(isGoingToOverview ? "overview" : "section");
       return;
     }
 
-    // Camera proxy object for smooth timeline tween
-    const camProxy = {
-      x: camera.position.x,
-      y: camera.position.y,
-      z: camera.position.z,
-      targetX: currentLookAt.current.x,
-      targetY: currentLookAt.current.y,
-      targetZ: currentLookAt.current.z,
-    };
+    _startCamPos.copy(camera.position);
+    _startLookAt.copy(_currentLookAt);
+
+    _targetCamPos.set(...targetPos);
+    _targetLookAt.set(...targetLook);
+
+    if (_startCamPos.distanceTo(_targetCamPos) < 0.05 && _startLookAt.distanceTo(_targetLookAt) < 0.05) {
+      camera.position.set(...targetPos);
+      _currentLookAt.set(...targetLook);
+      camera.lookAt(_currentLookAt);
+      onTransitionComplete(isGoingToOverview ? "overview" : "section");
+      return;
+    }
+
+    const arcHeight = 0.35;
+    const tweenObj = { t: 0 };
 
     const tl = gsap.timeline({
       onUpdate: () => {
-        camera.position.set(camProxy.x, camProxy.y, camProxy.z);
-        currentLookAt.current.set(camProxy.targetX, camProxy.targetY, camProxy.targetZ);
-        camera.lookAt(currentLookAt.current);
+        const progress = tweenObj.t;
+        camera.position.x = THREE.MathUtils.lerp(_startCamPos.x, _targetCamPos.x, progress);
+        camera.position.z = THREE.MathUtils.lerp(_startCamPos.z, _targetCamPos.z, progress);
+
+        const baseY = THREE.MathUtils.lerp(_startCamPos.y, _targetCamPos.y, progress);
+        const arc = Math.sin(progress * Math.PI) * arcHeight;
+        camera.position.y = baseY + arc;
+
+        _currentLookAt.lerpVectors(_startLookAt, _targetLookAt, progress);
+        camera.lookAt(_currentLookAt);
       },
       onComplete: () => {
+        camera.position.set(...targetPos);
+        _currentLookAt.set(...targetLook);
+        camera.lookAt(_currentLookAt);
         onTransitionComplete(isGoingToOverview ? "overview" : "section");
-        currentTween.current = null;
+        currentTimeline.current = null;
       },
     });
 
-    currentTween.current = tl;
+    currentTimeline.current = tl;
 
-    // Transition timing: 1.8s power3.inOut with parabolic arc (0.35 unit raise at midpoint)
-    const arcHeight = 0.35;
-    const midY = Math.max(camProxy.y, targetPos[1]) + arcHeight;
-
-    // X and Z glide smoothly with power3.inOut
-    tl.to(camProxy, {
-      x: targetPos[0],
-      z: targetPos[2],
-      targetX: targetLook[0],
-      targetY: targetLook[1],
-      targetZ: targetLook[2],
+    tl.to(tweenObj, {
+      t: 1,
       duration: 1.8,
       ease: "power3.inOut",
-    }, 0);
-
-    // Y raises at midpoint to clear furniture / room objects
-    tl.to(camProxy, {
-      y: midY,
-      duration: 0.9,
-      ease: "power2.out",
-    }, 0);
-
-    tl.to(camProxy, {
-      y: targetPos[1],
-      duration: 0.9,
-      ease: "power2.in",
-    }, 0.9);
+    });
 
     return () => {
-      if (currentTween.current) {
-        currentTween.current.kill();
+      if (currentTimeline.current) {
+        currentTimeline.current.kill();
       }
     };
-  }, [navState, currentSection, overviewCamera, reducedMotion, camera, onTransitionComplete]);
+  }, [navState, isGoingOverview, currentSection, overviewCamera, reducedMotion, camera, onTransitionComplete]);
 
-  // 3. Subtle frame-rate independent mouse parallax (idle only, max 0.03 units)
   useFrame((_, delta) => {
     if (navState !== "section" && navState !== "overview") return;
 
@@ -141,11 +134,10 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     const offsetX = _mouseCurrent.x * maxParallax;
     const offsetY = -_mouseCurrent.y * maxParallax;
 
-    // Apply micro offset to lookAt without touching position timeline
-    _lookAtTarget.copy(currentLookAt.current);
-    _lookAtTarget.x += offsetX;
-    _lookAtTarget.y += offsetY;
-    camera.lookAt(_lookAtTarget);
+    _tempLook.copy(_currentLookAt);
+    _tempLook.x += offsetX;
+    _tempLook.y += offsetY;
+    camera.lookAt(_tempLook);
   });
 
   return null;

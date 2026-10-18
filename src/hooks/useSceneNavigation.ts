@@ -34,40 +34,49 @@ export function useSceneNavigation() {
   const [sections, setSections] = useState<SectionItem[]>(SECTIONS);
   const [highlightedObject, setHighlightedObject] = useState<string | null>(null);
   const [overviewCam, setOverviewCam] = useState(OVERVIEW_CAMERA);
+  const [isGoingOverview, setIsGoingOverview] = useState(false);
 
-  // Track pending transition target
-  const transitioningRef = useRef(false);
+  // Safety fallback timeout for transitions
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load anchors.json once on mount
+  const totalSections = sections.length;
+  const currentSection = sections[currentSectionIndex] ?? sections[0];
+
+  useEffect(() => {
+    document.body.dataset.navState = navState;
+    document.body.dataset.section = currentSection?.id || "";
+    if (typeof window !== "undefined" && (window as any).__bc) {
+      (window as any).__bc.state = navState;
+      (window as any).__bc.section = currentSection?.id || "";
+    }
+  }, [navState, currentSection]);
+
   useEffect(() => {
     fetch("/models/anchors.json")
       .then((res) => res.json())
       .then((data: AnchorsData) => {
         setAnchors(data);
 
-        // Compute room overview camera from roomBounds
         if (data.roomBounds) {
           const rb = data.roomBounds;
           const fov = 48;
           const maxDim = Math.max(rb.size[0], rb.size[1], rb.size[2]);
           const fovRad = (fov * Math.PI) / 180;
           const dist = (maxDim / (2 * Math.tan(fovRad / 2))) * 1.05;
-          
-          // Open side is +Z, view slightly from the side (+X) and above (+Y)
+
           const camPos: [number, number, number] = [
             rb.center[0] + 0.5,
             rb.center[1] + dist * 0.35,
-            rb.center[2] + dist * 0.95
+            rb.center[2] + dist * 0.95,
           ];
           const camTarget: [number, number, number] = [
             rb.center[0],
             rb.center[1] - 0.2,
-            rb.center[2]
+            rb.center[2],
           ];
           setOverviewCam({ position: camPos, target: camTarget });
         }
 
-        // Dynamically compute camera framing for all sections
         setSections((prev) =>
           prev.map((sec) => {
             const anchorSec = data.sections[sec.id];
@@ -85,14 +94,35 @@ export function useSceneNavigation() {
         );
       })
       .catch((err) => {
-        console.warn("Could not load anchors.json, falling back to static defaults:", err);
+        console.warn("Could not load anchors.json:", err);
       });
   }, []);
 
-  const totalSections = sections.length;
-  const currentSection = sections[currentSectionIndex] ?? sections[0];
+  const onTransitionComplete = useCallback((reachedState: "overview" | "section") => {
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+    setNavState(reachedState);
+    if (reachedState === "section") {
+      setHighlightedObject(currentSection.objectName);
+    } else {
+      setHighlightedObject(null);
+    }
+  }, [currentSection]);
 
-  // Predictable State Actions
+  const startTransition = useCallback((nextState: "overview" | "section") => {
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+    }
+    setNavState("transitioning");
+
+    // Safety fallback: if GSAP onComplete doesn't fire within 2.4s, forcefully settle
+    transitionTimerRef.current = setTimeout(() => {
+      onTransitionComplete(nextState);
+    }, 2400);
+  }, [onTransitionComplete]);
+
   const goTo = useCallback(
     (sectionIdOrIndex: string | number) => {
       let targetIndex = 0;
@@ -103,33 +133,28 @@ export function useSceneNavigation() {
         if (found !== -1) targetIndex = found;
       }
 
-      // Ignore input if already transitioning
-      if (transitioningRef.current) return;
-
       setIsMenuOpen(false);
-      transitioningRef.current = true;
-      setNavState("transitioning");
+      setIsGoingOverview(false);
       setCurrentSectionIndex(targetIndex);
+      startTransition("section");
     },
-    [sections, totalSections]
+    [sections, totalSections, startTransition]
   );
 
   const home = useCallback(() => {
-    if (transitioningRef.current) return;
     setIsMenuOpen(false);
-    transitioningRef.current = true;
-    setNavState("transitioning");
+    setIsGoingOverview(true);
     setHighlightedObject(null);
-  }, []);
+    startTransition("overview");
+  }, [startTransition]);
 
   const next = useCallback(() => {
-    if (transitioningRef.current) return;
+    if (navState === "transitioning") return;
     if (navState === "overview") {
       goTo(0);
       return;
     }
     if (currentSectionIndex >= totalSections - 1) {
-      // Last section NEXT goes to overview
       home();
       return;
     }
@@ -137,12 +162,11 @@ export function useSceneNavigation() {
   }, [navState, currentSectionIndex, totalSections, goTo, home]);
 
   const back = useCallback(() => {
-    if (transitioningRef.current) return;
+    if (navState === "transitioning") return;
     if (navState === "overview") {
       return;
     }
     if (currentSectionIndex <= 0) {
-      // First section BACK goes to overview
       home();
       return;
     }
@@ -157,18 +181,6 @@ export function useSceneNavigation() {
     setIsDebugOpen((prev) => !prev);
   }, []);
 
-  // Called when camera transition finishes
-  const onTransitionComplete = useCallback((reachedState: "overview" | "section") => {
-    transitioningRef.current = false;
-    setNavState(reachedState);
-    if (reachedState === "section") {
-      setHighlightedObject(currentSection.objectName);
-    } else {
-      setHighlightedObject(null);
-    }
-  }, [currentSection]);
-
-  // Global Keyboard listener for arrow keys, Esc, Home, and G (debug overlay)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -199,6 +211,7 @@ export function useSceneNavigation() {
   return {
     navState,
     setNavState,
+    isGoingOverview,
     currentSectionIndex,
     currentSection,
     totalSections,

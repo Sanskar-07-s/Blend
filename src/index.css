@@ -4,8 +4,8 @@
   --accent: #c084fc;
   --text-main: #f5f3ff;
   --text-muted: #a1a1b5;
-  --glass-bg: rgba(15, 10, 30, 0.55);
-  --glass-border: rgba(139, 92, 246, 0.35);
+  --panel-bg: rgba(15, 10, 30, 0.75);
+  --panel-border: rgba(139, 92, 246, 0.35);
 }
 
 * {
@@ -28,14 +28,12 @@ h1, h2, h3, h4, .font-orbitron {
   letter-spacing: 0.06em;
 }
 
-/* Glass Minimal Panel */
+/* Performant Solid Semi-transparent Panel (no heavy blur during transitions) */
 .glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--glass-border);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
   position: relative;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
 
 /* Subtle corner brackets only for content panel */
@@ -73,7 +71,7 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-/* Content Panel Animation: Fades and slides 12px in 0.3s */
+/* Content Panel Animation: Fades and slides 12px using transform and opacity only */
 @keyframes panelSlideIn {
   0% {
     opacity: 0;
@@ -87,6 +85,7 @@ button:focus-visible {
 
 .panel-animate {
   animation: panelSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }
 
 /* Custom Scrollbar */
