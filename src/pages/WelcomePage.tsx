@@ -310,3 +310,5 @@ export const WelcomePage: React.FC = () => {
     </main>
   );
 };
+
+export default WelcomePage;

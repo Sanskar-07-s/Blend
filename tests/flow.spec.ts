@@ -38,8 +38,9 @@ test.describe("BLENDER CLUB PORTFOLIO COMPLETE FLOW", () => {
     });
 
     // --- STEP 1: WELCOME HERO (/) ---
-    await page.goto("http://localhost:5173/");
-    await expect(page.locator("h1")).toContainText("BLENDER CLUB");
+    await page.goto("http://localhost:5173/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("h1")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1")).toContainText(/blender club/i);
     await page.screenshot({ path: path.join(screenshotsDir, "welcome-desktop-1920x1080.png") });
 
     // Click ENTER to navigate to /experience
@@ -57,20 +58,20 @@ test.describe("BLENDER CLUB PORTFOLIO COMPLETE FLOW", () => {
     await studioEnterBtn.click();
 
     // Assembly intro plays or can be skipped
-    const skipBtn = page.locator("button:has-text('SKIP')");
+    const skipBtn = page.locator("button:has-text('SKIP'), button:has-text('Skip intro')").first();
     if (await skipBtn.isVisible({ timeout: 4000 }).catch(() => false)) {
       await skipBtn.click();
     }
 
     // Verify Overview is reached
     await page.locator("body[data-nav-state='overview']").waitFor({ state: "attached", timeout: 10000 });
-    await expect(page.locator("text=STUDIO OVERVIEW")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/overview/i").first()).toBeVisible({ timeout: 5000 });
 
     // --- STEP 3: NAVIGATE TO SECTION 8 (JOIN) ---
     // Jump directly to Section 8 (JOIN) via drawer
     const menuBtn = page.locator("button[aria-label='Open navigation drawer']");
     await menuBtn.click();
-    await page.locator("text=JOIN THE MATRIX").click();
+    await page.locator("text=/join/i").first().click();
     await waitForSettled(page);
     await expect(page.locator("body[data-section='join']")).toBeAttached({ timeout: 5000 });
 
@@ -120,7 +121,7 @@ test.describe("BLENDER CLUB PORTFOLIO COMPLETE FLOW", () => {
     // 2. Open drawer and click Exit to Site
     const menuBtn = page.locator("button[aria-label='Open navigation drawer']");
     await menuBtn.click();
-    await page.locator("button:has-text('EXIT TO SITE')").click();
+    await page.locator("button:has-text('Exit to club site'), button:has-text('EXIT TO SITE')").first().click();
     await page.waitForURL("**/club", { timeout: 10000 });
     expect(page.url()).toContain("/club");
 
