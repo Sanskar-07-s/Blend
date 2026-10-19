@@ -1,23 +1,30 @@
 import * as THREE from "three";
+import { getActivePalette } from "./palette";
 
 export const EMISSIVE_LIMITS = {
-  shelfAndBooks: 0.6,
-  monitorScreen: 1.2,
-  regularNeonStrips: 1.5,
-  sign: 2.0,
-  defaultMax: 1.5,
+  shelf: 0.2,          // Very faint warm strip under the shelf
+  deskLed: 0.5,        // Subtle LED strip behind desk/monitor
+  monitorScreen: 1.0,  // Monitor and laptop screens capped at 1.0
+  pcGlow: 0.4,         // PC fans and case glow
+  sign: 1.6,           // Gamer neon sign (the hero)
+  defaultMax: 0.5,
 };
 
 /**
- * Apply balanced emissive limits across all room materials once on scene load.
- * Traverses the scene once; do NOT run per frame.
+ * Apply balanced emissive limits and palette materials across all room meshes.
+ * Runs once on scene load.
  */
 export function applyEmissiveLimits(root: THREE.Object3D) {
+  const palette = getActivePalette();
+  const accentColor = new THREE.Color(palette.accent);
+  const accentSoftColor = new THREE.Color(palette.accentSoft);
+  const warmLightColor = new THREE.Color(palette.lightDeskLamp);
+
   root.traverse((child) => {
     if ((child as THREE.Mesh).isMesh) {
       const mesh = child as THREE.Mesh;
 
-      // Detect parent group
+      // Detect parent assembly group
       let parent: THREE.Object3D | null = mesh.parent;
       let groupName = "";
       while (parent && parent !== root) {
@@ -34,113 +41,128 @@ export function applyEmissiveLimits(root: THREE.Object3D) {
           if ((mat as THREE.MeshStandardMaterial).isMeshStandardMaterial) {
             const m = mat as THREE.MeshStandardMaterial;
             const matName = (m.name || "").toLowerCase();
+            const meshName = (mesh.name || "").toLowerCase();
 
-            let limit = EMISSIVE_LIMITS.defaultMax;
+            // 1. Color assignment for room architecture and furniture
+            if (groupName === "group_floor" || matName.includes("floor") || meshName.includes("floor")) {
+              m.color.set(palette.floor);
+              m.roughness = palette.floorRoughness;
+            } else if (
+              meshName.includes("baseboard") ||
+              matName.includes("baseboard") ||
+              matName.includes("trim") ||
+              groupName === "group_ceiling" ||
+              matName.includes("ceiling") ||
+              meshName.includes("roof")
+            ) {
+              m.color.set(palette.wallTrim);
+              m.roughness = 0.85;
+            } else if (
+              meshName.includes("backwall") ||
+              matName.includes("wall_feature")
+            ) {
+              m.color.set(palette.wallFeature);
+              m.roughness = 0.85;
+            } else if (
+              groupName.includes("wall") ||
+              meshName.includes("wall") ||
+              matName.includes("wall")
+            ) {
+              m.color.set(palette.wallMain);
+              m.roughness = 0.85;
+            } else if (
+              matName.includes("deskmat") ||
+              meshName.includes("mousepad")
+            ) {
+              m.color.set(palette.deskMat);
+              m.roughness = 0.70;
+            } else if (
+              matName.includes("plastic") ||
+              matName.includes("metal") ||
+              matName.includes("material") ||
+              matName.includes("wood") ||
+              groupName === "group_desk" ||
+              groupName === "group_chair"
+            ) {
+              // Lift near-black furniture colors so edges are clearly visible
+              if (!matName.includes("screen") && !matName.includes("sign")) {
+                const lum = m.color.r * 0.2126 + m.color.g * 0.7152 + m.color.b * 0.0722;
+                if (lum < 0.04) {
+                  m.color.set(palette.furnitureMinBase);
+                }
+                m.roughness = Math.max(m.roughness, 0.45);
+              }
+            }
 
-            // 1. Shelf and Books: max 0.6 (stops shelf from blowing out books & geometric shelf)
+            // 2. Neon & Emissive Minimalization
+            // Zero out saturated legacy cyan/magenta outlines
+            if (
+              matName.includes("outline") ||
+              matName.includes("pillar") ||
+              matName.includes("strip") && !matName.includes("rgb_ring")
+            ) {
+              m.emissive.set(0x000000);
+              m.emissiveIntensity = 0;
+            }
+
+            // Shelf glow: very faint warm strip under shelf at 0.2
             if (
               groupName === "group_shelf" ||
               matName.includes("luz") ||
-              matName.includes("shelf") ||
-              matName.includes("book") ||
-              matName.includes("nuvens") ||
-              matName.includes("material.011") ||
-              matName.includes("ikigai") ||
-              matName.includes("sapiens") ||
-              matName.includes("manson") ||
-              matName.includes("hygge") ||
-              matName.includes("game")
+              matName.includes("material.011")
             ) {
-              limit = EMISSIVE_LIMITS.shelfAndBooks;
+              if (m.emissive && m.emissive.getHex() !== 0) {
+                m.emissive.copy(warmLightColor);
+                m.emissiveIntensity = Math.min(m.emissiveIntensity, EMISSIVE_LIMITS.shelf);
+              }
             }
-            // 2. Neon Sign: max 2.0
+            // Desk / monitor rear LED: soft accent at 0.5
+            else if (
+              matName.includes("rgb_ring") ||
+              meshName.includes("rgb_ring") ||
+              (groupName === "group_desk" && matName.includes("led"))
+            ) {
+              m.emissive.copy(accentSoftColor);
+              m.emissiveIntensity = Math.min(m.emissiveIntensity || 0.5, EMISSIVE_LIMITS.deskLed);
+            }
+            // Screens: wallpaper retinted to accent, capped at 1.0
+            else if (
+              matName.includes("wallpaper") ||
+              matName.includes("screen") ||
+              matName.includes("display")
+            ) {
+              if (m.emissive && m.emissive.getHex() !== 0) {
+                m.emissiveIntensity = Math.min(m.emissiveIntensity || 1.0, EMISSIVE_LIMITS.monitorScreen);
+              }
+            }
+            // Gamer neon sign: the hero, Blender orange accent, capped at 1.6
             else if (
               groupName === "group_sign" ||
               matName.includes("sign") ||
               matName.includes("gamer") ||
-              matName.includes("svgmat")
+              matName === "o" ||
+              matName === "square" ||
+              matName === "triangel" ||
+              matName === "x"
             ) {
-              limit = EMISSIVE_LIMITS.sign;
+              m.color.copy(accentColor);
+              m.emissive.copy(accentColor);
+              m.emissiveIntensity = Math.min(m.emissiveIntensity || 1.6, EMISSIVE_LIMITS.sign);
             }
-            // 3. Monitor screen: max 1.2
+            // PC fans & Laptop glow: low
             else if (
-              groupName === "group_monitors" &&
-              (matName.includes("screen") || matName.includes("monitor") || matName.includes("display"))
+              matName.includes("emissions.blue") ||
+              matName.includes("fan") ||
+              matName.includes("led")
             ) {
-              limit = EMISSIVE_LIMITS.monitorScreen;
-            }
-            // 4. Regular neon strips / buttons: max 1.5
-            else if (
-              matName.includes("neon") ||
-              matName.includes("led") ||
-              matName.includes("emission") ||
-              matName.includes("triangel") ||
-              matName.includes("square") ||
-              matName.includes("o") ||
-              matName.includes("x")
-            ) {
-              limit = EMISSIVE_LIMITS.regularNeonStrips;
-            }
-
-            // Base material colors according to palette:
-            // Base floor/wall: #0B0716, Panel/Wood: #14102A
-            if (
-              groupName === "group_floor" ||
-              groupName.includes("wall") ||
-              matName.includes("floor") ||
-              matName.includes("chao") ||
-              matName.includes("wall") ||
-              matName.includes("parede")
-            ) {
-              m.color.set("#0B0716");
-              m.roughness = Math.max(m.roughness, 0.45);
-            } else if (
-              matName.includes("panel") ||
-              matName.includes("wood") ||
-              matName.includes("desk")
-            ) {
-              if (
-                !matName.includes("strip") &&
-                !matName.includes("neon") &&
-                !matName.includes("led") &&
-                !matName.includes("screen")
-              ) {
-                m.color.set("#14102A");
+              if (m.emissive && m.emissive.getHex() !== 0) {
+                m.emissive.copy(accentSoftColor);
+                m.emissiveIntensity = Math.min(m.emissiveIntensity, EMISSIVE_LIMITS.pcGlow);
               }
             }
-
-            // Remap emissives to strict palette roles:
-            // primary violet #7C3AED, bright accent #A78BFA, neon magenta #D946EF, cyan #22D3EE
-            if (m.emissive && m.emissive.getHex() !== 0) {
-              if (matName.includes("triangel")) {
-                m.emissive.set("#22D3EE");
-              } else if (matName.includes("square")) {
-                m.emissive.set("#A78BFA");
-              } else if (matName.includes("o") && matName.length <= 3) {
-                m.emissive.set("#D946EF");
-              } else if (matName.includes("x") && matName.length <= 3) {
-                m.emissive.set("#7C3AED");
-              } else if (groupName === "group_sign" || matName.includes("sign") || matName.includes("gamer")) {
-                m.emissive.set("#D946EF");
-              }
-            }
-
-            // Apply clamp and balanced emission values
-            if (m.emissive) {
-              if (limit === EMISSIVE_LIMITS.shelfAndBooks) {
-                // Shelf and books strictly capped at 0.6
-                m.emissiveIntensity = Math.min(m.emissiveIntensity, EMISSIVE_LIMITS.shelfAndBooks);
-              } else if (limit === EMISSIVE_LIMITS.sign) {
-                m.emissiveIntensity = Math.min(m.emissiveIntensity || 2.0, EMISSIVE_LIMITS.sign);
-              } else if (limit === EMISSIVE_LIMITS.monitorScreen) {
-                m.emissiveIntensity = Math.min(m.emissiveIntensity || 1.2, EMISSIVE_LIMITS.monitorScreen);
-              } else if (limit === EMISSIVE_LIMITS.regularNeonStrips) {
-                m.emissiveIntensity = Math.min(m.emissiveIntensity || 1.5, EMISSIVE_LIMITS.regularNeonStrips);
-              } else {
-                if (m.emissiveIntensity > limit) {
-                  m.emissiveIntensity = limit;
-                }
-              }
+            // Clamp any other emissive material to default max
+            else if (m.emissive && m.emissive.getHex() !== 0) {
+              m.emissiveIntensity = Math.min(m.emissiveIntensity, EMISSIVE_LIMITS.defaultMax);
             }
           }
         });

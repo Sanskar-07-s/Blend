@@ -56,7 +56,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
   onDegradeTier,
 }) => {
   const [model, setModel] = useState<THREE.Group | null>(null);
-  const { gl, scene, camera } = useThree();
+  const { gl, scene, camera, invalidate } = useThree();
 
   const prewarmedRef = useRef(false);
   const groupsRef = useRef<Map<string, THREE.Object3D>>(new Map());
@@ -70,6 +70,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
     ceiling: [],
     walls: [],
     desk: [],
+    screens: [],
     sign: [],
     shelf: [],
   });
@@ -100,6 +101,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
           ceiling: [],
           walls: [],
           desk: [],
+          screens: [],
           sign: [],
           shelf: [],
         };
@@ -200,17 +202,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
 
                   const matName = (m.name || "").toLowerCase();
 
-                  // PlayStation neon button colors
-                  if (
-                    matName.includes("triangel") ||
-                    matName.includes("square") ||
-                    matName.includes("o") ||
-                    matName.includes("x")
-                  ) {
-                    if (!m.emissive || m.emissive.getHex() === 0) {
-                      m.emissive = new THREE.Color("#c084fc");
-                    }
-                  }
+
 
                   // Classify emissive materials
                   if (m.emissive && m.emissive.getHex() !== 0) {
@@ -227,8 +219,14 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
                       groupName === "group_rightwall"
                     ) {
                       stripMaterials.walls?.push(m);
-                    } else if (groupName === "group_desk") {
+                    } else if (groupName === "group_desk" || matName.includes("rgb_ring")) {
                       stripMaterials.desk?.push(m);
+                    } else if (
+                      groupName === "group_monitors" ||
+                      matName.includes("screen") ||
+                      matName.includes("wallpaper")
+                    ) {
+                      stripMaterials.screens?.push(m);
                     } else if (groupName === "group_sign" || matName.includes("sign")) {
                       stripMaterials.sign?.push(m);
                     } else if (groupName === "group_shelf" || matName.includes("luz")) {
@@ -274,6 +272,10 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
         });
         const gpuMemoryMb = Math.round((gpuTextureMemoryBytes / (1024 * 1024)) * 10) / 10;
 
+        groupsRef.current = groups;
+        groupMaterialsRef.current = groupMaterials;
+        stripMaterialsRef.current = stripMaterials;
+
         if (typeof window !== "undefined" && (window as any).__bc) {
           (window as any).__bc.renderInfo = {
             calls: meshCount,
@@ -281,6 +283,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
             textures: uniqueTextures.size || gl.info.memory.textures,
             gpuMemoryMb: gpuMemoryMb,
           };
+          (window as any).__bc.modelLoaded = true;
         }
 
         setModel(root);
@@ -309,25 +312,38 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
 
               prewarmedRef.current = true;
 
-              // Hide room at scattered start poses until intro starts
-              groups.forEach((grp, name) => {
-                const rest = restTransforms.get(name);
-                const startInfo = GROUP_START_OFFSETS[name] || { offset: [0, 15, 0], rot: [0, 0, 0] };
-                if (rest) {
-                  grp.position.set(
-                    rest.position.x + startInfo.offset[0],
-                    rest.position.y + startInfo.offset[1],
-                    rest.position.z + startInfo.offset[2]
-                  );
-                  grp.rotation.set(
-                    rest.rotation.x + startInfo.rot[0],
-                    rest.rotation.y + startInfo.rot[1],
-                    rest.rotation.z + startInfo.rot[2]
-                  );
-                  grp.scale.set(0.35, 0.35, 0.35);
-                  grp.visible = false;
-                }
-              });
+              if (
+                introCompletedRef.current ||
+                navState === "overview" ||
+                navState === "section" ||
+                (typeof window !== "undefined" && ((window as any).__bc?.state === "overview" || (window as any).__bc?.state === "section"))
+              ) {
+                snapToRestPose({
+                  groups,
+                  restTransforms,
+                  stripMaterials: stripMaterialsRef.current,
+                });
+              } else {
+                // Hide room at scattered start poses until intro starts
+                groups.forEach((grp, name) => {
+                  const rest = restTransforms.get(name);
+                  const startInfo = GROUP_START_OFFSETS[name] || { offset: [0, 15, 0], rot: [0, 0, 0] };
+                  if (rest) {
+                    grp.position.set(
+                      rest.position.x + startInfo.offset[0],
+                      rest.position.y + startInfo.offset[1],
+                      rest.position.z + startInfo.offset[2]
+                    );
+                    grp.rotation.set(
+                      rest.rotation.x + startInfo.rot[0],
+                      rest.rotation.y + startInfo.rot[1],
+                      rest.rotation.z + startInfo.rot[2]
+                    );
+                    grp.scale.set(0.35, 0.35, 0.35);
+                    grp.visible = false;
+                  }
+                });
+              }
 
               onPrewarmComplete?.();
             })
@@ -401,14 +417,8 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
         stripMaterials: stripMaterialsRef.current,
         onComplete: () => {
           introCompletedRef.current = true;
-          // Freeze matrix auto-update on all static meshes for maximum runtime FPS
-          root.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
-              child.updateMatrix();
-              child.matrixAutoUpdate = false;
-            }
-          });
           onIntroComplete?.();
+          invalidate();
         },
         reducedMotion,
         durationMultiplier: introDurationMultiplier,
@@ -416,27 +426,23 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
 
       masterTimelineRef.current = tl;
     } else if (navState === "overview" || navState === "section") {
-      // If intro finished normally, createAssemblyTimeline has already locked all groups
-      // to rest and camera to overview. Do NOT re-snap or move camera again!
-      if (!introCompletedRef.current) {
-        introCompletedRef.current = true;
-        hasIntroPlayedRef.current = true;
-
-        if (masterTimelineRef.current) {
-          masterTimelineRef.current.kill();
-          masterTimelineRef.current = null;
-        }
-
-        const accentLight = scene.getObjectByProperty("type", "PointLight") as THREE.PointLight | undefined;
-        snapToRestPose({
-          groups: groupsRef.current,
-          restTransforms: restTransformsRef.current,
-          camera: undefined, // Never touch camera here; CameraController is responsible for camera
-          overviewCam: undefined,
-          accentLightRef: accentLight,
-          stripMaterials: stripMaterialsRef.current,
-        });
+      if (masterTimelineRef.current) {
+        masterTimelineRef.current.kill();
+        masterTimelineRef.current = null;
       }
+      introCompletedRef.current = true;
+      hasIntroPlayedRef.current = true;
+
+      const accentLight = scene.getObjectByProperty("type", "PointLight") as THREE.PointLight | undefined;
+      snapToRestPose({
+        groups: groupsRef.current,
+        restTransforms: restTransformsRef.current,
+        camera: undefined, // Never touch camera here; CameraController is responsible for camera
+        overviewCam: undefined,
+        accentLightRef: accentLight,
+        stripMaterials: stripMaterialsRef.current,
+      });
+      invalidate();
     }
 
     return () => {
@@ -451,30 +457,9 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
   const _frustum = useRef(new THREE.Frustum()).current;
 
   useFrame(() => {
-    if (navState !== "section" && navState !== "transitioning") {
-      groupsRef.current.forEach((grp) => {
-        if (!grp.visible) grp.visible = true;
-      });
-      return;
-    }
-
-    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-    _frustum.setFromProjectionMatrix(_projScreenMatrix);
-
-    const spheres = groupSpheresRef.current;
-    if (spheres && groupsRef.current.size > 0) {
-      groupsRef.current.forEach((grp, name) => {
-        // Floor and walls stay visible for room context
-        if (name === "group_floor" || name === "group_backwall") {
-          grp.visible = true;
-          return;
-        }
-        const sphere = spheres.get(name);
-        if (sphere) {
-          grp.visible = _frustum.intersectsSphere(sphere);
-        }
-      });
-    }
+    groupsRef.current.forEach((grp) => {
+      if (!grp.visible) grp.visible = true;
+    });
   });
 
   if (!model) return null;

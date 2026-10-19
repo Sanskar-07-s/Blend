@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { SectionItem } from "../../data/sections";
 import type { QualityTier } from "../../config/quality";
 import { ArrowRight, ChevronDown, ChevronUp, LogOut } from "lucide-react";
+import { getActivePalette } from "../../config/palette";
 
 interface ContentPanelProps {
   section: SectionItem;
@@ -13,9 +14,9 @@ interface ContentPanelProps {
 export const ContentPanel: React.FC<ContentPanelProps> = ({
   section,
   onNext,
-  tier = "high",
   onExitStudio,
 }) => {
+  const palette = getActivePalette();
   const [windowWidth, setWindowWidth] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
@@ -31,104 +32,76 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const isTablet = windowWidth >= 640 && windowWidth <= 1024;
   const isRight = section.preferredSide === "left";
 
-  const useBlur = tier === "high";
-
-  // Common panel style
-  const panelBackground = useBlur ? "rgba(15, 10, 30, 0.78)" : "rgba(12, 8, 24, 0.96)";
-  const panelBackdrop = useBlur ? "blur(12px)" : "none";
-
   if (isPhone) {
-    // Phone Layout: Bottom Sheet (max 40% height, scrollable, drag handle collapses to title bar)
+    // Phone Layout: Bottom Sheet with 6px radius, solid panel, left-aligned
     return (
       <div
-        className="glass-panel thin-brackets panel-animate"
+        className="solid-panel panel-animate"
         data-testid="bottom-sheet"
         style={{
           position: "fixed",
-          bottom: "calc(74px + env(safe-area-inset-bottom, 0px))",
+          bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
           left: "max(12px, env(safe-area-inset-left, 12px))",
           right: "max(12px, env(safe-area-inset-right, 12px))",
-          maxHeight: isCollapsed ? "54px" : "40dvh",
-          backgroundColor: panelBackground,
-          backdropFilter: panelBackdrop,
-          WebkitBackdropFilter: panelBackdrop,
-          border: "1px solid rgba(139, 92, 246, 0.35)",
-          borderRadius: "14px",
+          maxHeight: isCollapsed ? "54px" : "42dvh",
+          backgroundColor: "rgba(23, 26, 31, 0.94)",
+          border: "1px solid rgba(255, 255, 255, 0.10)",
+          borderRadius: "6px",
           zIndex: 40,
           pointerEvents: "auto",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(139, 92, 246, 0.15)",
-          transition: "max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          boxShadow: "0 16px 36px rgba(0, 0, 0, 0.5)",
+          transition: "max-height 0.25s ease",
           overflow: "hidden",
         }}
       >
-        {/* Drag handle / Title header bar */}
+        {/* Header bar / Collapse toggle */}
         <button
           onClick={() => setIsCollapsed((prev) => !prev)}
           aria-label={isCollapsed ? "Expand section details" : "Collapse section details"}
           style={{
             width: "100%",
-            minHeight: "44px",
+            minHeight: "48px",
             background: "transparent",
             border: "none",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            padding: "6px 16px",
+            justifyContent: "space-between",
+            padding: "8px 16px",
             cursor: "pointer",
-            color: "#f5f3ff",
+            color: palette.text,
             textAlign: "left",
             flexShrink: 0,
           }}
         >
-          {/* Visual pill drag handle */}
-          <div
-            style={{
-              width: "36px",
-              height: "4px",
-              borderRadius: "2px",
-              backgroundColor: "rgba(192, 132, 252, 0.5)",
-              marginBottom: "4px",
-            }}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span
+              className="mono-font"
+              style={{
+                fontSize: "12px",
+                color: palette.accent,
+                fontWeight: 500,
+              }}
+            >
+              {section.badge}
+            </span>
+            <span
+              className="heading-font"
+              style={{
+                fontSize: "16px",
+                color: palette.text,
+              }}
+            >
+              {section.title}
+            </span>
+            {section.isPlaceholder && (
+              <span className="placeholder-tag">Placeholder</span>
+            )}
+          </div>
 
-          <div
-            style={{
-              width: "100%",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "Orbitron, sans-serif",
-                  fontWeight: 700,
-                  color: "#c084fc",
-                }}
-              >
-                {section.badge}
-              </span>
-              <span
-                className="font-orbitron"
-                style={{
-                  fontSize: "15px",
-                  fontWeight: 800,
-                  color: "#f5f3ff",
-                  lineHeight: 1.2,
-                }}
-              >
-                {section.title}
-              </span>
-            </div>
-
-            <div style={{ color: "#c084fc", display: "flex", alignItems: "center" }}>
-              {isCollapsed ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </div>
+          <div style={{ color: palette.textMuted }}>
+            {isCollapsed ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
         </button>
 
@@ -139,52 +112,53 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               padding: "4px 16px 16px 16px",
               overflowY: "auto",
               WebkitOverflowScrolling: "touch",
-              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
             }}
           >
             <p
               style={{
-                fontSize: "clamp(13px, 3.4vw, 14px)",
-                color: "#a1a1b5",
-                lineHeight: 1.45,
-                marginBottom: "12px",
+                fontSize: "15px",
+                lineHeight: 1.6,
+                color: palette.textMuted,
               }}
             >
               {section.description}
             </p>
 
             {section.cards && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {section.cards.map((card, i) => (
                   <div
                     key={i}
                     style={{
-                      background: "rgba(15, 10, 30, 0.45)",
-                      border: "1px solid rgba(139, 92, 246, 0.2)",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
+                      background: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                      padding: "10px 12px",
+                      borderRadius: "4px",
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#f5f3ff" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span style={{ fontSize: "14px", fontWeight: 500, color: palette.text }}>
                         {card.title}
                       </span>
                       {card.tag && (
                         <span
+                          className="mono-font"
                           style={{
-                            fontSize: "9px",
-                            padding: "1px 5px",
+                            fontSize: "10px",
+                            padding: "2px 5px",
                             borderRadius: "3px",
-                            background: "rgba(139, 92, 246, 0.2)",
-                            color: "#c084fc",
-                            fontWeight: 700,
+                            background: "rgba(255, 255, 255, 0.06)",
+                            color: palette.textMuted,
                           }}
                         >
                           {card.tag}
                         </span>
                       )}
                     </div>
-                    <p style={{ fontSize: "11px", color: "#a1a1b5", marginTop: "2px", lineHeight: 1.3 }}>
+                    <p style={{ fontSize: "13px", color: palette.textMuted, marginTop: "4px", lineHeight: 1.5 }}>
                       {card.desc}
                     </p>
                   </div>
@@ -192,32 +166,14 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               </div>
             )}
 
-            <div style={{ display: "flex", gap: "8px", flexDirection: section.id === "join" ? "column" : "row" }}>
+            <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
               <button
                 onClick={onNext}
-                aria-label={section.ctaText ?? "Continue to next section"}
-                style={{
-                  flex: 1,
-                  width: "100%",
-                  minHeight: "44px",
-                  background: "linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(168, 85, 247, 0.95))",
-                  border: "1px solid #c084fc",
-                  borderRadius: "8px",
-                  color: "#ffffff",
-                  padding: "8px 16px",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  fontFamily: "Orbitron, sans-serif",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  boxShadow: "0 0 16px rgba(139, 92, 246, 0.4)",
-                }}
+                className="btn-primary"
+                style={{ flex: 1 }}
               >
-                <span>{section.ctaText ?? "NEXT SECTION"}</span>
-                <ArrowRight size={15} />
+                <span>{section.ctaText ?? "Next"}</span>
+                <ArrowRight size={14} />
               </button>
 
               {section.id === "join" && onExitStudio && (
@@ -226,27 +182,11 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
                   data-testid="exit-studio-btn"
                   onClick={onExitStudio}
                   aria-label="Exit Studio to Club Site"
-                  style={{
-                    width: "100%",
-                    minHeight: "44px",
-                    background: "linear-gradient(135deg, #7C3AED, #D946EF)",
-                    border: "1px solid #D946EF",
-                    borderRadius: "8px",
-                    color: "#ffffff",
-                    padding: "8px 16px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    fontFamily: "Orbitron, sans-serif",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    boxShadow: "0 0 20px rgba(217, 70, 239, 0.4)",
-                  }}
+                  className="btn-secondary"
+                  style={{ flex: 1 }}
                 >
-                  <span>EXIT STUDIO</span>
-                  <LogOut size={15} />
+                  <span>Exit studio</span>
+                  <LogOut size={14} />
                 </button>
               )}
             </div>
@@ -259,50 +199,48 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   // Tablet & Desktop Layout
   return (
     <div
-      className="glass-panel thin-brackets panel-animate"
+      className="solid-panel panel-animate"
       data-testid="side-panel"
       style={{
         position: "fixed",
         top: "calc(88px + env(safe-area-inset-top, 0px))",
         [isRight ? "right" : "left"]: isTablet ? "24px" : "36px",
-        width: isTablet ? "360px" : "420px",
+        width: isTablet ? "360px" : "400px",
         maxWidth: "calc(100vw - 48px)",
         maxHeight: "calc(100dvh - 180px)",
         overflowY: "auto",
-        backgroundColor: panelBackground,
-        backdropFilter: panelBackdrop,
-        WebkitBackdropFilter: panelBackdrop,
-        borderRadius: "12px",
+        backgroundColor: "rgba(23, 26, 31, 0.94)",
+        border: "1px solid rgba(255, 255, 255, 0.10)",
+        borderRadius: "6px",
         padding: "24px",
         zIndex: 40,
         pointerEvents: "auto",
-        boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(139, 92, 246, 0.15)",
+        boxShadow: "0 16px 36px rgba(0, 0, 0, 0.45)",
       }}
     >
-      {/* Header: Section badge & title */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+      {/* Header: Mono section number & placeholder indicator */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
         <span
+          className="mono-font"
           style={{
-            fontSize: "11px",
-            fontFamily: "Orbitron, sans-serif",
-            fontWeight: 700,
-            color: "#c084fc",
-            letterSpacing: "0.1em",
+            fontSize: "12px",
+            fontWeight: 500,
+            color: palette.accent,
           }}
         >
           {section.badge}
         </span>
+        {section.isPlaceholder && (
+          <span className="placeholder-tag">Placeholder</span>
+        )}
       </div>
 
       <h2
-        className="font-orbitron"
+        className="heading-font"
         style={{
-          fontSize: "clamp(18px, 2.5vw, 21px)",
-          fontWeight: 800,
-          color: "#f5f3ff",
-          lineHeight: 1.25,
-          marginBottom: "8px",
-          letterSpacing: "0.04em",
+          fontSize: "22px",
+          color: palette.text,
+          marginBottom: "12px",
         }}
       >
         {section.title}
@@ -310,48 +248,47 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
 
       <p
         style={{
-          fontSize: "clamp(13px, 1.8vw, 15px)",
-          color: "#a1a1b5",
-          lineHeight: 1.5,
-          marginBottom: "14px",
+          fontSize: "15px",
+          color: palette.textMuted,
+          lineHeight: 1.6,
+          marginBottom: "18px",
         }}
       >
         {section.description}
       </p>
 
       {section.cards && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
           {section.cards.map((card, i) => (
             <div
               key={i}
               style={{
-                background: "rgba(15, 10, 30, 0.45)",
-                border: "1px solid rgba(139, 92, 246, 0.2)",
-                padding: "8px 12px",
-                borderRadius: "6px",
+                background: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                padding: "10px 14px",
+                borderRadius: "4px",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "#f5f3ff" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontSize: "14px", fontWeight: 500, color: palette.text }}>
                   {card.title}
                 </span>
                 {card.tag && (
                   <span
+                    className="mono-font"
                     style={{
-                      fontSize: "9px",
-                      padding: "1px 6px",
+                      fontSize: "10px",
+                      padding: "2px 6px",
                       borderRadius: "3px",
-                      background: "rgba(139, 92, 246, 0.2)",
-                      color: "#c084fc",
-                      border: "1px solid rgba(192, 132, 252, 0.3)",
-                      fontWeight: 700,
+                      background: "rgba(255, 255, 255, 0.06)",
+                      color: palette.textMuted,
                     }}
                   >
                     {card.tag}
                   </span>
                 )}
               </div>
-              <p style={{ fontSize: "12px", color: "#a1a1b5", marginTop: "2px", lineHeight: 1.35 }}>
+              <p style={{ fontSize: "13px", color: palette.textMuted, marginTop: "4px", lineHeight: 1.5 }}>
                 {card.desc}
               </p>
             </div>
@@ -359,38 +296,14 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         </div>
       )}
 
-      {/* Action buttons */}
-      <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+      {/* Action Buttons */}
+      <div style={{ display: "flex", gap: "10px" }}>
         <button
           onClick={onNext}
-          aria-label={section.ctaText ?? "Continue to next section"}
-          style={{
-            minHeight: "44px",
-            background: "linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(168, 85, 247, 0.95))",
-            border: "1px solid #c084fc",
-            borderRadius: "8px",
-            color: "#ffffff",
-            padding: "10px 18px",
-            fontSize: "12px",
-            fontWeight: 700,
-            fontFamily: "Orbitron, sans-serif",
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            boxShadow: "0 0 16px rgba(139, 92, 246, 0.4)",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = "0 0 24px rgba(192, 132, 252, 0.7)";
-            e.currentTarget.style.transform = "translateY(-1px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = "0 0 16px rgba(139, 92, 246, 0.4)";
-            e.currentTarget.style.transform = "translateY(0)";
-          }}
+          className="btn-primary"
+          style={{ flex: 1 }}
         >
-          <span>{section.ctaText ?? "NEXT SECTION"}</span>
+          <span>{section.ctaText ?? "Next"}</span>
           <ArrowRight size={14} />
         </button>
 
@@ -400,33 +313,10 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
             data-testid="exit-studio-btn"
             onClick={onExitStudio}
             aria-label="Exit Studio to Club Site"
-            style={{
-              minHeight: "44px",
-              background: "linear-gradient(135deg, #7C3AED, #D946EF)",
-              border: "1px solid #D946EF",
-              borderRadius: "8px",
-              color: "#ffffff",
-              padding: "10px 20px",
-              fontSize: "12px",
-              fontWeight: 700,
-              fontFamily: "Orbitron, sans-serif",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              boxShadow: "0 0 20px rgba(217, 70, 239, 0.45)",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = "0 0 30px rgba(217, 70, 239, 0.8)";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = "0 0 20px rgba(217, 70, 239, 0.45)";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
+            className="btn-secondary"
+            style={{ flex: 1 }}
           >
-            <span>EXIT STUDIO</span>
+            <span>Exit studio</span>
             <LogOut size={14} />
           </button>
         )}

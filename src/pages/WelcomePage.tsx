@@ -3,10 +3,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { detectDeviceTier, QualityTier } from "../config/quality";
+import { getActivePalette } from "../config/palette";
 import { ArrowRight, Compass } from "lucide-react";
 
 // Low-poly procedural club emblem with rotating torus rings & low-poly icosahedron
 function ProceduralEmblem({ isExiting }: { isExiting: boolean }) {
+  const palette = getActivePalette();
   const groupRef = useRef<THREE.Group>(null);
   const ring1Ref = useRef<THREE.Mesh>(null);
   const ring2Ref = useRef<THREE.Mesh>(null);
@@ -48,27 +50,27 @@ function ProceduralEmblem({ isExiting }: { isExiting: boolean }) {
 
   return (
     <group ref={groupRef}>
-      {/* Outer Glow Ring */}
+      {/* Outer Ring */}
       <mesh ref={ring1Ref}>
-        <torusGeometry args={[2.0, 0.04, 16, 64]} />
+        <torusGeometry args={[2.0, 0.035, 16, 64]} />
         <meshStandardMaterial
-          color="#A78BFA"
-          emissive="#7C3AED"
-          emissiveIntensity={2.5}
-          roughness={0.2}
-          metalness={0.8}
+          color={palette.accent}
+          emissive={palette.accent}
+          emissiveIntensity={1.0}
+          roughness={0.4}
+          metalness={0.2}
         />
       </mesh>
 
       {/* Middle Orbit Ring */}
       <mesh ref={ring2Ref} rotation={[Math.PI / 4, 0, 0]}>
-        <torusGeometry args={[1.6, 0.03, 16, 64]} />
+        <torusGeometry args={[1.6, 0.025, 16, 64]} />
         <meshStandardMaterial
-          color="#22D3EE"
-          emissive="#22D3EE"
-          emissiveIntensity={1.8}
-          roughness={0.3}
-          metalness={0.7}
+          color={palette.accentSoft}
+          emissive={palette.accentSoft}
+          emissiveIntensity={0.6}
+          roughness={0.5}
+          metalness={0.2}
         />
       </mesh>
 
@@ -76,12 +78,9 @@ function ProceduralEmblem({ isExiting }: { isExiting: boolean }) {
       <mesh ref={coreRef}>
         <icosahedronGeometry args={[0.9, 0]} />
         <meshStandardMaterial
-          color="#7C3AED"
-          emissive="#D946EF"
-          emissiveIntensity={1.2}
-          roughness={0.15}
-          metalness={0.85}
-          wireframe={false}
+          color={palette.wallMain}
+          roughness={0.7}
+          metalness={0.1}
           flatShading={true}
         />
       </mesh>
@@ -89,14 +88,15 @@ function ProceduralEmblem({ isExiting }: { isExiting: boolean }) {
       {/* Central Inner Wireframe Cage */}
       <mesh>
         <icosahedronGeometry args={[0.98, 0]} />
-        <meshBasicMaterial color="#F5F3FF" wireframe={true} transparent opacity={0.35} />
+        <meshBasicMaterial color={palette.text} wireframe={true} transparent opacity={0.25} />
       </mesh>
     </group>
   );
 }
 
 // Subtle background floating dust
-function DustField({ count = 80 }: { count?: number }) {
+function DustField({ count = 60 }: { count?: number }) {
+  const palette = getActivePalette();
   const points = useMemo(() => {
     const p = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -112,26 +112,26 @@ function DustField({ count = 80 }: { count?: number }) {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={count} array={points} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial size={0.035} color="#C084FC" transparent opacity={0.6} depthWrite={false} />
+      <pointsMaterial size={0.03} color={palette.accentSoft} transparent opacity={0.3} depthWrite={false} />
     </points>
   );
 }
 
 export const WelcomePage: React.FC = () => {
+  const palette = getActivePalette();
   const navigate = useNavigate();
   const [tier, setTier] = useState<QualityTier>("medium");
   const [isExiting, setIsExiting] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    document.title = "BLENDER CLUB // Welcome";
+    document.title = "Blender Club — 3D Studio";
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReducedMotion(mediaQuery.matches);
 
     detectDeviceTier().then((detected) => setTier(detected));
 
-    // Low-priority prefetch of /experience and room.glb after 2s idle
-    // only if connection is not Save-Data or 2g
+    // Prefetch /experience and room.glb
     let prefetchTimeout: NodeJS.Timeout | null = null;
     const nav = navigator as any;
     const isSaveData = nav.connection?.saveData === true;
@@ -139,11 +139,7 @@ export const WelcomePage: React.FC = () => {
 
     if (!isSaveData && !isSlow) {
       prefetchTimeout = setTimeout(() => {
-        console.log("[Welcome] Prefetching Experience code & model behind the scenes...");
-        // Dynamic import prefetch of the Experience page code
         import("./ExperiencePage").catch(() => {});
-
-        // Low-priority link rel=prefetch for model
         const link = document.createElement("link");
         link.rel = "prefetch";
         link.as = "fetch";
@@ -169,7 +165,7 @@ export const WelcomePage: React.FC = () => {
 
     setTimeout(() => {
       navigate("/experience");
-    }, 800);
+    }, 700);
   };
 
   const isLowTier = tier === "low";
@@ -180,7 +176,7 @@ export const WelcomePage: React.FC = () => {
         position: "relative",
         width: "100vw",
         height: "100vh",
-        backgroundColor: "#05030A",
+        backgroundColor: palette.background,
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -190,7 +186,7 @@ export const WelcomePage: React.FC = () => {
         boxSizing: "border-box",
       }}
     >
-      {/* Background Radial Glow */}
+      {/* Background Radial Lift */}
       <div
         style={{
           position: "absolute",
@@ -202,7 +198,7 @@ export const WelcomePage: React.FC = () => {
           maxWidth: "800px",
           maxHeight: "800px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(217, 70, 239, 0.05) 45%, transparent 70%)",
+          background: `radial-gradient(circle, ${palette.backgroundCenter} 0%, transparent 70%)`,
           pointerEvents: "none",
           zIndex: 1,
         }}
@@ -218,19 +214,19 @@ export const WelcomePage: React.FC = () => {
         }}
       >
         {!isLowTier ? (
-          <Canvas
-            camera={{ position: [0, 0, 5], fov: 45 }}
-            gl={{ antialias: true, alpha: true }}
-            dpr={Math.min(window.devicePixelRatio || 1, 1.5)}
-          >
-            <ambientLight intensity={0.6} />
-            <pointLight position={[3, 3, 3]} color="#A78BFA" intensity={2.5} />
-            <pointLight position={[-3, -3, 2]} color="#22D3EE" intensity={1.5} />
-            <Suspense fallback={null}>
+          <Suspense fallback={null}>
+            <Canvas
+              camera={{ position: [0, 0, 5.2], fov: 45 }}
+              dpr={tier === "high" ? 1.5 : 1.0}
+              gl={{ antialias: true, alpha: true }}
+            >
+              <ambientLight intensity={0.8} />
+              <directionalLight position={[4, 5, 4]} intensity={1.2} />
+              <pointLight position={[-3, -2, 2]} intensity={0.5} color={palette.lightCoolRim} />
               <ProceduralEmblem isExiting={isExiting} />
-              <DustField count={60} />
-            </Suspense>
-          </Canvas>
+              <DustField count={tier === "high" ? 80 : 40} />
+            </Canvas>
+          </Suspense>
         ) : (
           <div
             style={{
@@ -238,18 +234,30 @@ export const WelcomePage: React.FC = () => {
               top: "42%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              width: "180px",
-              height: "180px",
+              width: "200px",
+              height: "200px",
               borderRadius: "50%",
-              border: "2px solid rgba(167, 139, 250, 0.5)",
-              boxShadow: "0 0 32px rgba(124, 58, 237, 0.4)",
-              animation: "spin 12s linear infinite",
+              border: `2px solid ${palette.accent}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: isExiting ? 0 : 0.8,
+              transition: "opacity 0.6s ease",
             }}
-          />
+          >
+            <div
+              style={{
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                border: `1px dashed ${palette.accentSoft}`,
+              }}
+            />
+          </div>
         )}
       </div>
 
-      {/* Top Bar: Wordmark + Direct Skip to Site */}
+      {/* Header bar */}
       <header
         style={{
           width: "100%",
@@ -260,26 +268,23 @@ export const WelcomePage: React.FC = () => {
           zIndex: 10,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div
             style={{
-              width: "10px",
-              height: "10px",
+              width: "6px",
+              height: "6px",
               borderRadius: "50%",
-              backgroundColor: "#22D3EE",
-              boxShadow: "0 0 10px #22D3EE",
+              backgroundColor: palette.accent,
             }}
           />
           <span
-            className="font-orbitron"
+            className="heading-font"
             style={{
-              fontSize: "14px",
-              letterSpacing: "0.2em",
-              color: "#F5F3FF",
-              fontWeight: 700,
+              fontSize: "15px",
+              color: palette.text,
             }}
           >
-            BLENDER CLUB
+            Blender Club
           </span>
         </div>
 
@@ -287,28 +292,11 @@ export const WelcomePage: React.FC = () => {
           to="/club"
           id="welcome-skip-to-site"
           aria-label="Skip 3D studio and go directly to main club site"
+          className="btn-secondary"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
+            padding: "6px 14px",
             fontSize: "13px",
-            color: "#A8A3C7",
-            textDecoration: "none",
-            padding: "8px 14px",
-            borderRadius: "999px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            backgroundColor: "rgba(20, 16, 42, 0.4)",
-            backdropFilter: "blur(8px)",
-            transition: "all 0.2s ease",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#F5F3FF";
-            e.currentTarget.style.borderColor = "rgba(167, 139, 250, 0.4)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#A8A3C7";
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+            backgroundColor: "rgba(23, 26, 31, 0.8)",
           }}
         >
           <Compass size={14} />
@@ -316,69 +304,54 @@ export const WelcomePage: React.FC = () => {
         </Link>
       </header>
 
-      {/* Center / Bottom Content: Title & Interactive Controls */}
+      {/* Center Content: Title & Interactive Controls */}
       <div
         style={{
           zIndex: 10,
           textAlign: "center",
-          maxWidth: "680px",
+          maxWidth: "600px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "18px",
-          marginBottom: "20px",
+          gap: "16px",
+          marginBottom: "24px",
         }}
       >
         <span
+          className="mono-font"
           style={{
-            fontSize: "12px",
+            fontSize: "11px",
             textTransform: "uppercase",
-            letterSpacing: "0.25em",
-            color: "#A78BFA",
-            fontWeight: 600,
+            letterSpacing: "0.08em",
+            color: palette.accent,
           }}
         >
-          Interactive 3D Virtual Workspace
+          Collegiate 3D studio
         </span>
 
         <h1
-          className="font-orbitron"
+          className="heading-font"
           style={{
-            fontSize: "clamp(2.4rem, 6vw, 4.2rem)",
-            fontWeight: 800,
-            lineHeight: 1.05,
-            letterSpacing: "0.05em",
+            fontSize: "clamp(2.5rem, 6vw, 4.2rem)",
+            color: palette.text,
             margin: 0,
-            background: "linear-gradient(135deg, #FFFFFF 20%, #DDD6FE 60%, #A78BFA 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            textShadow: "0 0 35px rgba(124, 58, 237, 0.4)",
+            lineHeight: 1.05,
           }}
         >
-          BLENDER CLUB
+          Blender Club
         </h1>
 
         <p
           style={{
-            fontSize: "clamp(0.95rem, 2vw, 1.15rem)",
-            lineHeight: 1.5,
-            color: "#A8A3C7",
+            fontSize: "16px",
+            lineHeight: 1.6,
+            color: palette.textMuted,
             margin: 0,
-            maxWidth: "520px",
+            maxWidth: "480px",
           }}
         >
-          Tagline placeholder
+          A community of student 3D artists, animators, and technical creators exploring digital design in Blender.
         </p>
-
-        <span
-          style={{
-            fontSize: "13px",
-            color: "#6D688D",
-            letterSpacing: "0.08em",
-          }}
-        >
-          Enter the studio
-        </span>
 
         {/* Action Buttons */}
         <div
@@ -386,102 +359,67 @@ export const WelcomePage: React.FC = () => {
             display: "flex",
             flexWrap: "wrap",
             justifyContent: "center",
-            gap: "14px",
-            marginTop: "6px",
+            gap: "12px",
+            marginTop: "8px",
           }}
         >
           <button
             onClick={handleEnter}
             id="welcome-enter-btn"
             aria-label="Enter the 3D Studio Experience"
+            className="btn-primary"
             style={{
-              padding: "16px 36px",
-              borderRadius: "999px",
-              border: "1px solid rgba(167, 139, 250, 0.4)",
-              background: "linear-gradient(135deg, #7C3AED 0%, #9333EA 100%)",
-              color: "#FFFFFF",
+              padding: "12px 28px",
               fontSize: "15px",
-              fontWeight: 700,
-              letterSpacing: "0.15em",
-              cursor: "pointer",
-              boxShadow: "0 0 24px rgba(124, 58, 237, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.3)",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "10px",
-              transition: "transform 0.2s ease, box-shadow 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.04)";
-              e.currentTarget.style.boxShadow = "0 0 34px rgba(124, 58, 237, 0.7)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1.0)";
-              e.currentTarget.style.boxShadow = "0 0 24px rgba(124, 58, 237, 0.5)";
             }}
           >
-            <span>ENTER</span>
-            <ArrowRight size={18} />
+            <span>Enter studio</span>
+            <ArrowRight size={16} />
           </button>
 
           <Link
             to="/club"
             id="welcome-explore-site-btn"
+            className="btn-secondary"
             style={{
-              padding: "16px 28px",
-              borderRadius: "999px",
-              border: "1px solid rgba(255, 255, 255, 0.15)",
-              backgroundColor: "rgba(20, 16, 42, 0.6)",
-              backdropFilter: "blur(12px)",
-              color: "#F5F3FF",
+              padding: "12px 24px",
               fontSize: "14px",
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(167, 139, 250, 0.5)";
-              e.currentTarget.style.backgroundColor = "rgba(124, 58, 237, 0.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-              e.currentTarget.style.backgroundColor = "rgba(20, 16, 42, 0.6)";
             }}
           >
-            Explore Club Site
+            Explore club site
           </Link>
         </div>
       </div>
 
-      {/* Footer hint */}
+      {/* Footer */}
       <footer
         style={{
-          zIndex: 10,
+          width: "100%",
+          maxWidth: "1200px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           fontSize: "12px",
-          color: "#6D688D",
-          letterSpacing: "0.05em",
+          color: palette.textMuted,
+          zIndex: 10,
         }}
       >
-        <span>Full 3D WebGL Studio & Creative Portfolio</span>
+        <span className="mono-font">Three.js + Blender PBR</span>
+        <span className="mono-font">Scroll to explore</span>
       </footer>
 
-      {/* Screen flash / fade to black on ENTER */}
+      {/* Exit crossfade */}
       <div
         style={{
           position: "fixed",
           inset: 0,
-          backgroundColor: "#05030A",
+          backgroundColor: palette.background,
           opacity: isExiting ? 1 : 0,
+          transition: "opacity 0.6s ease-in-out",
           pointerEvents: "none",
-          transition: reducedMotion ? "none" : "opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1)",
           zIndex: 100,
         }}
       />
     </main>
   );
 };
-
-export default WelcomePage;

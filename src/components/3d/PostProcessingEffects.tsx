@@ -25,11 +25,11 @@ export const PostProcessingEffects: React.FC<PostProcessingEffectsProps> = ({
           - Half resolution on medium tier
       */}
       <Bloom
-        luminanceThreshold={0.88}
-        luminanceSmoothing={0.2}
-        intensity={halfRes ? 0.35 : 0.4}
+        luminanceThreshold={0.95}
+        luminanceSmoothing={0.15}
+        intensity={0.2}
         mipmapBlur
-        resolutionScale={halfRes ? 0.5 : 1.0}
+        resolutionScale={1.0}
       />
     </EffectComposer>
   );

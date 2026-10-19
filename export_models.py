@@ -19,51 +19,54 @@ for mat in bpy.data.materials:
     if not mat.node_tree:
         continue
 
-    # Part B: Clamp shelf materials so shelf does not wash out
+    # Part B: Clamp shelf materials so shelf does not wash out (max 0.2)
     # 'Luz' is the cloud shelf LED light
     if mat.name == 'Luz':
         for n in mat.node_tree.nodes:
             if n.type == 'EMISSION':
                 str_inp = n.inputs.get('Strength')
                 if str_inp:
-                    str_inp.default_value = 0.6
+                    str_inp.default_value = 0.2
     
     if mat.name == 'Material.011':
         for n in mat.node_tree.nodes:
             if n.type == 'EMISSION':
                 str_inp = n.inputs.get('Strength')
                 if str_inp:
-                    str_inp.default_value = 0.6
+                    str_inp.default_value = 0.2
             elif n.type == 'BSDF_PRINCIPLED':
                 str_inp = n.inputs.get('Emission Strength')
                 if str_inp:
-                    str_inp.default_value = 0.6
+                    str_inp.default_value = 0.2
 
     if mat.name == 'emissions.blue':
         for n in mat.node_tree.nodes:
             if n.type == 'EMISSION':
                 str_inp = n.inputs.get('Strength')
                 if str_inp:
-                    str_inp.default_value = 1.5
+                    str_inp.default_value = 0.4
 
-    # PlayStation neon buttons (O, square, Triangel, X) - set balanced 2.0
+    # Gamer neon sign (O, square, Triangel, X) - set Blender orange #F28C28 and cap 1.6
     if mat.name in ['O', 'square', 'Triangel', 'X']:
         bsdf = mat.node_tree.nodes.get('Principled BSDF')
         if bsdf:
+            # Blender orange in linear sRGB: approx (0.887, 0.262, 0.021, 1.0)
+            orange_col = (0.887, 0.262, 0.021, 1.0)
+            if 'Base Color' in bsdf.inputs:
+                bsdf.inputs['Base Color'].default_value = orange_col
             if 'Emission Color' in bsdf.inputs:
-                base_col = bsdf.inputs['Base Color'].default_value
-                bsdf.inputs['Emission Color'].default_value = (base_col[0], base_col[1], base_col[2], 1.0)
+                bsdf.inputs['Emission Color'].default_value = orange_col
             if 'Emission Strength' in bsdf.inputs:
-                bsdf.inputs['Emission Strength'].default_value = 2.0
+                bsdf.inputs['Emission Strength'].default_value = 1.6
 
     # Ensure black metal does not vanish into pure black
     if mat.name == 'Black metal':
         bsdf = mat.node_tree.nodes.get('Principled BSDF')
         if bsdf:
             if 'Base Color' in bsdf.inputs and not bsdf.inputs['Base Color'].is_linked:
-                bsdf.inputs['Base Color'].default_value = (0.09, 0.08, 0.14, 1.0)
+                bsdf.inputs['Base Color'].default_value = (0.010, 0.012, 0.015, 1.0)
             if 'Roughness' in bsdf.inputs and not bsdf.inputs['Roughness'].is_linked:
-                bsdf.inputs['Roughness'].default_value = 0.45
+                bsdf.inputs['Roughness'].default_value = 0.50
 
 # 2. Downscale textures to max 1024 to ensure 60fps & low memory usage
 print("[2/6] Downscaling textures exceeding 1024 to 1024...")
@@ -240,6 +243,12 @@ group_root_mapping = {
 
 created_groups = []
 for gname, root_names in group_root_mapping.items():
+    old = bpy.data.objects.get(gname)
+    if old:
+        for c in list(old.children):
+            c.parent = None
+        bpy.data.objects.remove(old, do_unlink=True)
+
     # Create group empty at origin (0, 0, 0)
     empty = bpy.data.objects.new(gname, None)
     empty.empty_display_type = 'PLAIN_AXES'
@@ -249,10 +258,13 @@ for gname, root_names in group_root_mapping.items():
     count = 0
     for rname in root_names:
         obj = bpy.data.objects.get(rname)
-        if obj and obj.parent is None:
-            obj.parent = empty
-            obj.matrix_parent_inverse = empty.matrix_world.inverted()
-            count += 1
+        if obj:
+            if obj.parent and obj.parent.name.startswith('group_'):
+                obj.parent = None
+            if obj.parent is None:
+                obj.parent = empty
+                obj.matrix_parent_inverse = empty.matrix_world.inverted()
+                count += 1
     
     print(f"  * {gname:<16} -> parented {count} root objects (origin [0, 0, 0])")
     created_groups.append(gname)
@@ -268,7 +280,7 @@ for obj in bpy.data.objects:
 
 bpy.ops.export_scene.gltf(
     filepath=glb_path,
-    use_selection=True,
+    use_selection=False,
     export_format='GLB',
     export_apply=False, # Keep parent Empty nodes so groups are animated together!
     export_yup=True,

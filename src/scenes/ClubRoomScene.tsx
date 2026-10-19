@@ -10,6 +10,7 @@ import { CameraController } from "../components/3d/CameraController";
 import { DebugAnchorOverlay } from "../components/3d/DebugAnchorOverlay";
 import { PostProcessingEffects } from "../components/3d/PostProcessingEffects";
 import { TIER_CONFIG, type QualityTier } from "../config/quality";
+import { getActivePalette } from "../config/palette";
 import type { NavState, AnchorsData } from "../hooks/useSceneNavigation";
 import type { SectionItem } from "../data/sections";
 
@@ -139,6 +140,7 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
   isPaused = false,
 }) => {
   const config = TIER_CONFIG[tier] || TIER_CONFIG.high;
+  const palette = getActivePalette();
   const isIdle = (navState === "overview" || navState === "section") && !isGoingOverview;
 
   return (
@@ -154,12 +156,12 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           antialias: config.antialias,
           powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 0.95,
+          toneMappingExposure: 1.15,
           outputColorSpace: THREE.SRGBColorSpace,
         }}
         dpr={config.dpr}
         shadows={config.shadows}
-        frameloop={isPaused ? "never" : isIdle ? "demand" : "always"}
+        frameloop={isPaused ? "never" : "always"}
         onCreated={({ gl }) => {
           if (config.shadows) {
             gl.shadowMap.autoUpdate = false;
@@ -184,13 +186,16 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           threshold={0.75}
         />
 
-        <color attach="background" args={["#05030A"]} />
-        <fog attach="fog" args={["#05030A", 12, 45]} />
+        <color attach="background" args={[palette.background]} />
+        {palette.fogEnabled && (
+          <fog attach="fog" args={[palette.background, palette.fogNear, palette.fogFar]} />
+        )}
 
-        <Environment preset="night" environmentIntensity={0.25} />
+        <Environment preset="apartment" environmentIntensity={0.55} />
 
         <SceneLighting
-          activeAccentColor={currentSection?.accentColor ?? "#7C3AED"}
+          navState={navState}
+          currentSection={currentSection}
           shadows={config.shadows}
         />
 

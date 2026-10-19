@@ -27,11 +27,11 @@ function FloatingProceduralShape() {
       <mesh ref={ringRef}>
         <torusGeometry args={[1.5, 0.08, 16, 64]} />
         <meshStandardMaterial
-          color="#A78BFA"
-          emissive="#7C3AED"
-          emissiveIntensity={0.6}
-          roughness={0.2}
-          metalness={0.8}
+          color="#F28C28"
+          emissive="#F28C28"
+          emissiveIntensity={0.5}
+          roughness={0.4}
+          metalness={0.2}
         />
       </mesh>
 
@@ -39,11 +39,11 @@ function FloatingProceduralShape() {
       <mesh rotation={[Math.PI / 4, 0, Math.PI / 4]}>
         <torusGeometry args={[1.2, 0.05, 16, 48]} />
         <meshStandardMaterial
-          color="#D946EF"
-          emissive="#D946EF"
-          emissiveIntensity={0.4}
-          roughness={0.3}
-          metalness={0.7}
+          color="#FFB765"
+          emissive="#FFB765"
+          emissiveIntensity={0.3}
+          roughness={0.5}
+          metalness={0.2}
         />
       </mesh>
 
@@ -51,12 +51,11 @@ function FloatingProceduralShape() {
       <mesh ref={coreRef}>
         <icosahedronGeometry args={[0.7, 0]} />
         <meshStandardMaterial
-          color="#F5F3FF"
-          emissive="#7C3AED"
-          emissiveIntensity={0.5}
-          roughness={0.1}
-          metalness={0.9}
+          color="#2B3038"
+          roughness={0.7}
+          metalness={0.1}
           wireframe={false}
+          flatShading={true}
         />
       </mesh>
     </group>

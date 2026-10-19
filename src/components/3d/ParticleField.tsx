@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import * as THREE from "three";
 import { SCENE_CONFIG } from "../../config/sceneConfig";
+import { getActivePalette } from "../../config/palette";
 
 interface ParticleFieldProps {
   count?: number;
@@ -46,10 +47,11 @@ const ParticleShaderMaterial = {
 
 export const ParticleField: React.FC<ParticleFieldProps> = ({ count = 300 }) => {
   const [positions, colors] = useMemo(() => {
+    const palette = getActivePalette();
     const pos = new Float32Array(count * 3);
     const col = new Float32Array(count * 3);
-    const colorA = new THREE.Color("#c084fc");
-    const colorB = new THREE.Color("#38bdf8");
+    const colorA = new THREE.Color(palette.accent);
+    const colorB = new THREE.Color(palette.accentSoft);
 
     for (let i = 0; i < count; i++) {
       // Confined directly within room bounds: X: 0..10, Y: 0.5..5.5, Z: 0..9.5

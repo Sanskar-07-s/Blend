@@ -1,10 +1,16 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import '@fontsource/orbitron/latin-700.css'
-import '@fontsource/inter/latin-400.css'
-import '@fontsource/inter/latin-600.css'
+import '@fontsource/bricolage-grotesque/600.css'
+import '@fontsource/instrument-sans/400.css'
+import '@fontsource/instrument-sans/500.css'
+import '@fontsource/jetbrains-mono/400.css'
 import './index.css'
 import App from './App.tsx'
+import { applyPaletteToCss } from './config/palette.ts'
+
+if (typeof window !== 'undefined') {
+  applyPaletteToCss();
+}
 
 if (typeof window !== 'undefined') {
   const frameTimes: number[] = [];

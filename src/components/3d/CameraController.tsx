@@ -20,7 +20,7 @@ const _startCamPos = new THREE.Vector3();
 const _targetCamPos = new THREE.Vector3();
 const _startLookAt = new THREE.Vector3();
 const _targetLookAt = new THREE.Vector3();
-const _currentLookAt = new THREE.Vector3();
+const _currentLookAt = new THREE.Vector3(5.0, 3.0, 4.5);
 const _tempLook = new THREE.Vector3();
 const _mouseTarget = new THREE.Vector2();
 const _mouseCurrent = new THREE.Vector2();
@@ -65,12 +65,14 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       currentTimeline.current = null;
     }
 
-    // Crucial: exactly ONE intro timeline ends directly at the computed overview pose.
-    // Transitioning from "intro" to "overview" must NOT launch a second tween or camera motion.
-    if (prevNavState === "intro" && navState === "overview") {
+    // Crucial: entering overview directly snaps to overview pose
+    if ((prevNavState === "intro" || prevNavState === "loading") && navState === "overview") {
+      gsap.killTweensOf(camera.position);
       camera.position.set(...targetPos);
       _currentLookAt.set(...targetLook);
       camera.lookAt(_currentLookAt);
+      camera.updateMatrixWorld(true);
+      invalidate();
       onTransitionComplete("overview");
       return;
     }

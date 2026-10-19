@@ -58,7 +58,7 @@ export const ClubPage: React.FC = () => {
   return (
     <div
       style={{
-        backgroundColor: "#05030A",
+        backgroundColor: "#0F1115",
         color: "#F5F3FF",
         minHeight: "100vh",
         width: "100%",
@@ -73,7 +73,7 @@ export const ClubPage: React.FC = () => {
           position: "absolute",
           top: "-40px",
           left: "12px",
-          backgroundColor: "#7C3AED",
+          backgroundColor: "#F28C28",
           color: "#FFFFFF",
           padding: "8px 16px",
           zIndex: 1000,
@@ -94,7 +94,7 @@ export const ClubPage: React.FC = () => {
         style={{
           position: "fixed",
           inset: 0,
-          backgroundColor: "#7C3AED",
+          backgroundColor: "#F28C28",
           opacity: entryFade ? 1 : 0,
           pointerEvents: "none",
           zIndex: 999,
@@ -141,12 +141,12 @@ export const ClubPage: React.FC = () => {
                 width: "8px",
                 height: "8px",
                 borderRadius: "50%",
-                backgroundColor: "#A78BFA",
-                boxShadow: "0 0 12px #7C3AED",
+                backgroundColor: "#FFB765",
+                boxShadow: "0 0 12px #F28C28",
               }}
             />
             <span
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "16px",
                 fontWeight: 800,
@@ -212,7 +212,7 @@ export const ClubPage: React.FC = () => {
                 alignItems: "center",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#A78BFA";
+                e.currentTarget.style.borderColor = "#FFB765";
                 e.currentTarget.style.boxShadow = "0 0 16px rgba(124, 58, 237, 0.4)";
               }}
               onMouseLeave={(e) => {
@@ -233,7 +233,7 @@ export const ClubPage: React.FC = () => {
                 color: "#FFFFFF",
                 padding: "8px 20px",
                 borderRadius: "6px",
-                background: "linear-gradient(135deg, #7C3AED, #A78BFA)",
+                background: "linear-gradient(135deg, #F28C28, #FFB765)",
                 textDecoration: "none",
                 boxShadow: "0 0 16px rgba(124, 58, 237, 0.4)",
                 transition: "all 0.2s ease",
@@ -321,7 +321,7 @@ export const ClubPage: React.FC = () => {
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: "8px",
-                  border: "1px solid #7C3AED",
+                  border: "1px solid #F28C28",
                   background: "rgba(20, 16, 42, 0.7)",
                   color: "#F5F3FF",
                   fontFamily: "Orbitron, sans-serif",
@@ -341,7 +341,7 @@ export const ClubPage: React.FC = () => {
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: "8px",
-                  background: "linear-gradient(135deg, #7C3AED, #A78BFA)",
+                  background: "linear-gradient(135deg, #F28C28, #FFB765)",
                   color: "#FFFFFF",
                   fontFamily: "Orbitron, sans-serif",
                   fontWeight: 700,
@@ -411,14 +411,14 @@ export const ClubPage: React.FC = () => {
                   marginBottom: "20px",
                 }}
               >
-                <Sparkles size={14} color="#A78BFA" />
+                <Sparkles size={14} color="#FFB765" />
                 <span
                   style={{
                     fontSize: "12px",
                     fontFamily: "Orbitron, sans-serif",
                     fontWeight: 700,
                     letterSpacing: "0.1em",
-                    color: "#A78BFA",
+                    color: "#FFB765",
                   }}
                 >
                   COLLEGIATE 3D LAB
@@ -427,7 +427,7 @@ export const ClubPage: React.FC = () => {
 
               {/* Single primary H1 for the page */}
               <h1
-                className="font-orbitron"
+                className="heading-font"
                 style={{
                   fontSize: "clamp(34px, 5.5vw, 62px)",
                   fontWeight: 900,
@@ -459,7 +459,7 @@ export const ClubPage: React.FC = () => {
                     minHeight: "48px",
                     padding: "12px 28px",
                     borderRadius: "8px",
-                    background: "linear-gradient(135deg, #7C3AED, #A78BFA)",
+                    background: "linear-gradient(135deg, #F28C28, #FFB765)",
                     color: "#FFFFFF",
                     fontFamily: "Orbitron, sans-serif",
                     fontWeight: 700,
@@ -505,7 +505,7 @@ export const ClubPage: React.FC = () => {
                     transition: "all 0.2s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#A78BFA";
+                    e.currentTarget.style.borderColor = "#FFB765";
                     e.currentTarget.style.boxShadow = "0 0 20px rgba(124, 58, 237, 0.35)";
                     e.currentTarget.style.transform = "translateY(-2px)";
                   }}
@@ -559,14 +559,14 @@ export const ClubPage: React.FC = () => {
                 fontSize: "12px",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
-                color: "#A78BFA",
+                color: "#FFB765",
                 letterSpacing: "0.15em",
               }}
             >
               {SITE_CONTENT.about.subline.toUpperCase()}
             </span>
             <h2
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "clamp(26px, 4vw, 42px)",
                 fontWeight: 800,
@@ -595,7 +595,7 @@ export const ClubPage: React.FC = () => {
                 padding: "32px",
               }}
             >
-              <h3 className="font-orbitron" style={{ fontSize: "18px", color: "#C084FC", marginBottom: "14px" }}>
+              <h3 className="heading-font" style={{ fontSize: "18px", color: "#C084FC", marginBottom: "14px" }}>
                 OUR MISSION
               </h3>
               <p style={{ color: "#A8A3C7", lineHeight: 1.6, fontSize: "15px" }}>
@@ -612,7 +612,7 @@ export const ClubPage: React.FC = () => {
                 padding: "32px",
               }}
             >
-              <h3 className="font-orbitron" style={{ fontSize: "18px", color: "#C084FC", marginBottom: "14px" }}>
+              <h3 className="heading-font" style={{ fontSize: "18px", color: "#C084FC", marginBottom: "14px" }}>
                 OUR VISION
               </h3>
               <p style={{ color: "#A8A3C7", lineHeight: 1.6, fontSize: "15px" }}>
@@ -641,11 +641,11 @@ export const ClubPage: React.FC = () => {
                 }}
               >
                 <div
-                  className="font-orbitron"
+                  className="heading-font"
                   style={{
                     fontSize: "36px",
                     fontWeight: 800,
-                    color: "#A78BFA",
+                    color: "#FFB765",
                     marginBottom: "8px",
                   }}
                 >
@@ -687,14 +687,14 @@ export const ClubPage: React.FC = () => {
                 fontSize: "12px",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
-                color: "#A78BFA",
+                color: "#FFB765",
                 letterSpacing: "0.15em",
               }}
             >
               {SITE_CONTENT.whatWeDo.subline.toUpperCase()}
             </span>
             <h2
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "clamp(26px, 4vw, 42px)",
                 fontWeight: 800,
@@ -727,7 +727,7 @@ export const ClubPage: React.FC = () => {
                   transition: "all 0.25s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#A78BFA";
+                  e.currentTarget.style.borderColor = "#FFB765";
                   e.currentTarget.style.transform = "translateY(-3px)";
                   e.currentTarget.style.boxShadow = "0 12px 28px rgba(124, 58, 237, 0.25)";
                 }}
@@ -768,7 +768,7 @@ export const ClubPage: React.FC = () => {
                         padding: "3px 8px",
                         borderRadius: "4px",
                         backgroundColor: "rgba(124, 58, 237, 0.2)",
-                        color: "#A78BFA",
+                        color: "#FFB765",
                       }}
                     >
                       {card.tag}
@@ -776,7 +776,7 @@ export const ClubPage: React.FC = () => {
                   </div>
 
                   <h3
-                    className="font-orbitron"
+                    className="heading-font"
                     style={{
                       fontSize: "17px",
                       fontWeight: 700,
@@ -821,14 +821,14 @@ export const ClubPage: React.FC = () => {
                 fontSize: "12px",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
-                color: "#A78BFA",
+                color: "#FFB765",
                 letterSpacing: "0.15em",
               }}
             >
               {SITE_CONTENT.projects.subline.toUpperCase()}
             </span>
             <h2
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "clamp(26px, 4vw, 42px)",
                 fontWeight: 800,
@@ -862,7 +862,7 @@ export const ClubPage: React.FC = () => {
                   flexDirection: "column",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#A78BFA";
+                  e.currentTarget.style.borderColor = "#FFB765";
                   e.currentTarget.style.transform = "translateY(-4px)";
                   e.currentTarget.style.boxShadow = "0 16px 32px rgba(124, 58, 237, 0.3)";
                 }}
@@ -894,7 +894,7 @@ export const ClubPage: React.FC = () => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: "#A78BFA",
+                      color: "#FFB765",
                     }}
                   >
                     <Box size={28} />
@@ -921,7 +921,7 @@ export const ClubPage: React.FC = () => {
                 <div style={{ padding: "20px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                   <div>
                     <h3
-                      className="font-orbitron"
+                      className="heading-font"
                       style={{
                         fontSize: "17px",
                         fontWeight: 700,
@@ -945,7 +945,7 @@ export const ClubPage: React.FC = () => {
                           padding: "2px 6px",
                           borderRadius: "3px",
                           backgroundColor: "rgba(124, 58, 237, 0.15)",
-                          color: "#A78BFA",
+                          color: "#FFB765",
                           border: "1px solid rgba(124, 58, 237, 0.25)",
                         }}
                       >
@@ -978,7 +978,7 @@ export const ClubPage: React.FC = () => {
             <div
               style={{
                 backgroundColor: "#14102A",
-                border: "1px solid #7C3AED",
+                border: "1px solid #F28C28",
                 borderRadius: "14px",
                 maxWidth: "600px",
                 width: "100%",
@@ -989,10 +989,10 @@ export const ClubPage: React.FC = () => {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
                 <div>
-                  <span style={{ fontSize: "11px", fontFamily: "Orbitron, sans-serif", fontWeight: 700, color: "#A78BFA" }}>
+                  <span style={{ fontSize: "11px", fontFamily: "Orbitron, sans-serif", fontWeight: 700, color: "#FFB765" }}>
                     {selectedProject.category}
                   </span>
-                  <h3 className="font-orbitron" style={{ fontSize: "22px", fontWeight: 800, color: "#F5F3FF", marginTop: "4px" }}>
+                  <h3 className="heading-font" style={{ fontSize: "22px", fontWeight: 800, color: "#F5F3FF", marginTop: "4px" }}>
                     {selectedProject.title}
                   </h3>
                 </div>
@@ -1024,7 +1024,7 @@ export const ClubPage: React.FC = () => {
                   justifyContent: "center",
                   marginBottom: "20px",
                   border: "1px solid rgba(124, 58, 237, 0.2)",
-                  color: "#A78BFA",
+                  color: "#FFB765",
                 }}
               >
                 <Box size={48} />
@@ -1057,7 +1057,7 @@ export const ClubPage: React.FC = () => {
                 style={{
                   width: "100%",
                   minHeight: "44px",
-                  background: "linear-gradient(135deg, #7C3AED, #A78BFA)",
+                  background: "linear-gradient(135deg, #F28C28, #FFB765)",
                   border: "none",
                   borderRadius: "8px",
                   color: "#FFFFFF",
@@ -1098,14 +1098,14 @@ export const ClubPage: React.FC = () => {
                 fontSize: "12px",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
-                color: "#A78BFA",
+                color: "#FFB765",
                 letterSpacing: "0.15em",
               }}
             >
               {SITE_CONTENT.events.subline.toUpperCase()}
             </span>
             <h2
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "clamp(26px, 4vw, 42px)",
                 fontWeight: 800,
@@ -1136,8 +1136,8 @@ export const ClubPage: React.FC = () => {
                     minHeight: "44px",
                     padding: "8px 24px",
                     borderRadius: "8px",
-                    background: isActive ? "linear-gradient(135deg, #7C3AED, #A78BFA)" : "rgba(20, 16, 42, 0.6)",
-                    border: `1px solid ${isActive ? "#A78BFA" : "rgba(124, 58, 237, 0.3)"}`,
+                    background: isActive ? "linear-gradient(135deg, #F28C28, #FFB765)" : "rgba(20, 16, 42, 0.6)",
+                    border: `1px solid ${isActive ? "#FFB765" : "rgba(124, 58, 237, 0.3)"}`,
                     color: isActive ? "#FFFFFF" : "#A8A3C7",
                     fontFamily: "Orbitron, sans-serif",
                     fontWeight: 700,
@@ -1185,18 +1185,18 @@ export const ClubPage: React.FC = () => {
                     >
                       {ev.tag}
                     </span>
-                    <h3 className="font-orbitron" style={{ fontSize: "18px", fontWeight: 700, color: "#F5F3FF", marginTop: "6px" }}>
+                    <h3 className="heading-font" style={{ fontSize: "18px", fontWeight: 700, color: "#F5F3FF", marginTop: "6px" }}>
                       {ev.title}
                     </h3>
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: "16px", color: "#A8A3C7", fontSize: "13px" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      <Calendar size={14} color="#A78BFA" />
+                      <Calendar size={14} color="#FFB765" />
                       {ev.date}
                     </span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      <Clock size={14} color="#A78BFA" />
+                      <Clock size={14} color="#FFB765" />
                       {ev.time}
                     </span>
                   </div>
@@ -1206,7 +1206,7 @@ export const ClubPage: React.FC = () => {
                   {ev.description}
                 </p>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#7C3AED", fontWeight: 600 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#F28C28", fontWeight: 600 }}>
                   <MapPin size={14} />
                   <span>{ev.location}</span>
                 </div>
@@ -1240,14 +1240,14 @@ export const ClubPage: React.FC = () => {
                 fontSize: "12px",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
-                color: "#A78BFA",
+                color: "#FFB765",
                 letterSpacing: "0.15em",
               }}
             >
               {SITE_CONTENT.learning.subline.toUpperCase()}
             </span>
             <h2
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "clamp(26px, 4vw, 42px)",
                 fontWeight: 800,
@@ -1290,7 +1290,7 @@ export const ClubPage: React.FC = () => {
                         padding: "3px 10px",
                         borderRadius: "4px",
                         backgroundColor: "rgba(15, 10, 30, 0.9)",
-                        border: `1px solid ${res.level === "Beginner" ? "#22D3EE" : res.level === "Intermediate" ? "#A78BFA" : "#D946EF"}`,
+                        border: `1px solid ${res.level === "Beginner" ? "#9CC3FF" : res.level === "Intermediate" ? "#FFB765" : "#FFB765"}`,
                         color: res.level === "Beginner" ? "#67E8F9" : res.level === "Intermediate" ? "#DDD6FE" : "#F472B6",
                         fontWeight: 700,
                       }}
@@ -1299,7 +1299,7 @@ export const ClubPage: React.FC = () => {
                     </span>
                   </div>
 
-                  <h3 className="font-orbitron" style={{ fontSize: "16px", fontWeight: 700, color: "#F5F3FF", marginBottom: "8px" }}>
+                  <h3 className="heading-font" style={{ fontSize: "16px", fontWeight: 700, color: "#F5F3FF", marginBottom: "8px" }}>
                     {res.title}
                   </h3>
                   <p style={{ fontSize: "13px", color: "#A8A3C7", lineHeight: 1.5, marginBottom: "16px" }}>
@@ -1313,7 +1313,7 @@ export const ClubPage: React.FC = () => {
                     href={res.link}
                     style={{
                       fontSize: "12px",
-                      color: "#A78BFA",
+                      color: "#FFB765",
                       textDecoration: "none",
                       display: "inline-flex",
                       alignItems: "center",
@@ -1355,14 +1355,14 @@ export const ClubPage: React.FC = () => {
                 fontSize: "12px",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
-                color: "#A78BFA",
+                color: "#FFB765",
                 letterSpacing: "0.15em",
               }}
             >
               {SITE_CONTENT.gallery.subline.toUpperCase()}
             </span>
             <h2
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "clamp(26px, 4vw, 42px)",
                 fontWeight: 800,
@@ -1394,7 +1394,7 @@ export const ClubPage: React.FC = () => {
                   transition: "all 0.25s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#A78BFA";
+                  e.currentTarget.style.borderColor = "#FFB765";
                   e.currentTarget.style.transform = "translateY(-3px)";
                 }}
                 onMouseLeave={(e) => {
@@ -1413,7 +1413,7 @@ export const ClubPage: React.FC = () => {
                     position: "relative",
                   }}
                 >
-                  <Box size={36} color="#A78BFA" />
+                  <Box size={36} color="#FFB765" />
                   <span
                     style={{
                       position: "absolute",
@@ -1431,7 +1431,7 @@ export const ClubPage: React.FC = () => {
                 </div>
 
                 <div style={{ padding: "16px" }}>
-                  <h3 className="font-orbitron" style={{ fontSize: "15px", fontWeight: 700, color: "#F5F3FF" }}>
+                  <h3 className="heading-font" style={{ fontSize: "15px", fontWeight: 700, color: "#F5F3FF" }}>
                     {item.title}
                   </h3>
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "12px", color: "#A8A3C7" }}>
@@ -1463,7 +1463,7 @@ export const ClubPage: React.FC = () => {
             <div
               style={{
                 backgroundColor: "#14102A",
-                border: "1px solid #7C3AED",
+                border: "1px solid #F28C28",
                 borderRadius: "14px",
                 maxWidth: "700px",
                 width: "100%",
@@ -1473,7 +1473,7 @@ export const ClubPage: React.FC = () => {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                 <div>
-                  <h3 className="font-orbitron" style={{ fontSize: "20px", color: "#F5F3FF" }}>
+                  <h3 className="heading-font" style={{ fontSize: "20px", color: "#F5F3FF" }}>
                     {selectedGalleryItem.title}
                   </h3>
                   <span style={{ fontSize: "12px", color: "#A8A3C7" }}>
@@ -1537,14 +1537,14 @@ export const ClubPage: React.FC = () => {
                 fontSize: "12px",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
-                color: "#A78BFA",
+                color: "#FFB765",
                 letterSpacing: "0.15em",
               }}
             >
               {SITE_CONTENT.team.subline.toUpperCase()}
             </span>
             <h2
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "clamp(26px, 4vw, 42px)",
                 fontWeight: 800,
@@ -1580,17 +1580,17 @@ export const ClubPage: React.FC = () => {
                     height: "80px",
                     borderRadius: "50%",
                     backgroundColor: "rgba(124, 58, 237, 0.2)",
-                    border: "2px solid #7C3AED",
+                    border: "2px solid #F28C28",
                     margin: "0 auto 16px auto",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#A78BFA",
+                    color: "#FFB765",
                   }}
                 >
                   <Users size={32} />
                 </div>
-                <h3 className="font-orbitron" style={{ fontSize: "16px", fontWeight: 700, color: "#F5F3FF" }}>
+                <h3 className="heading-font" style={{ fontSize: "16px", fontWeight: 700, color: "#F5F3FF" }}>
                   {member.name}
                 </h3>
                 <div style={{ fontSize: "13px", fontWeight: 600, color: "#C084FC", marginTop: "4px" }}>
@@ -1629,14 +1629,14 @@ export const ClubPage: React.FC = () => {
                 fontSize: "12px",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
-                color: "#A78BFA",
+                color: "#FFB765",
                 letterSpacing: "0.15em",
               }}
             >
               {SITE_CONTENT.community.subline.toUpperCase()}
             </span>
             <h2
-              className="font-orbitron"
+              className="heading-font"
               style={{
                 fontSize: "clamp(26px, 4vw, 42px)",
                 fontWeight: 800,
@@ -1679,7 +1679,7 @@ export const ClubPage: React.FC = () => {
                   transition: "all 0.2s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#A78BFA";
+                  e.currentTarget.style.borderColor = "#FFB765";
                   e.currentTarget.style.color = "#C084FC";
                 }}
                 onMouseLeave={(e) => {
@@ -1730,7 +1730,7 @@ export const ClubPage: React.FC = () => {
                       style={{
                         transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
                         transition: "transform 0.25s ease",
-                        color: "#A78BFA",
+                        color: "#FFB765",
                         flexShrink: 0,
                       }}
                     />
@@ -1781,14 +1781,14 @@ export const ClubPage: React.FC = () => {
               fontSize: "12px",
               fontFamily: "Orbitron, sans-serif",
               fontWeight: 700,
-              color: "#A78BFA",
+              color: "#FFB765",
               letterSpacing: "0.15em",
             }}
           >
             {SITE_CONTENT.join.subline.toUpperCase()}
           </span>
           <h2
-            className="font-orbitron"
+            className="heading-font"
             style={{
               fontSize: "clamp(28px, 4.5vw, 48px)",
               fontWeight: 800,
@@ -1821,7 +1821,7 @@ export const ClubPage: React.FC = () => {
                 }}
               >
                 <div
-                  className="font-orbitron"
+                  className="heading-font"
                   style={{
                     fontSize: "24px",
                     fontWeight: 800,
@@ -1851,7 +1851,7 @@ export const ClubPage: React.FC = () => {
                 minHeight: "52px",
                 padding: "14px 40px",
                 borderRadius: "8px",
-                background: "linear-gradient(135deg, #7C3AED, #D946EF)",
+                background: "linear-gradient(135deg, #F28C28, #FFB765)",
                 color: "#FFFFFF",
                 fontFamily: "Orbitron, sans-serif",
                 fontWeight: 700,
@@ -1931,7 +1931,7 @@ export const ClubPage: React.FC = () => {
           }}
         >
           <div>
-            <div className="font-orbitron" style={{ fontSize: "16px", fontWeight: 800, color: "#F5F3FF" }}>
+            <div className="heading-font" style={{ fontSize: "16px", fontWeight: 800, color: "#F5F3FF" }}>
               {SITE_CONTENT.navigation.brand}
             </div>
             <div style={{ fontSize: "12px", color: "#A8A3C7", marginTop: "4px" }}>
@@ -1944,7 +1944,7 @@ export const ClubPage: React.FC = () => {
               to="/experience"
               style={{
                 fontSize: "13px",
-                color: "#A78BFA",
+                color: "#FFB765",
                 textDecoration: "none",
                 fontWeight: 600,
               }}

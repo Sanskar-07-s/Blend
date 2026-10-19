@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Menu, Home } from "lucide-react";
+import { getActivePalette } from "../../config/palette";
 
 interface HeaderNavProps {
   onOpenMenu: () => void;
@@ -7,6 +8,7 @@ interface HeaderNavProps {
 }
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({ onOpenMenu, onHome }) => {
+  const palette = getActivePalette();
   const [windowWidth, setWindowWidth] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
@@ -33,38 +35,34 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ onOpenMenu, onHome }) => {
         pointerEvents: "none",
       }}
     >
-      {/* Top-Left: On phone: Home icon button (min 44x44); on desktop: Wordmark */}
+      {/* Top-Left: Home icon or Wordmark */}
       {isPhone ? (
         <div style={{ display: "flex", alignItems: "center", gap: "8px", pointerEvents: "auto" }}>
           <button
             onClick={onHome}
             aria-label="Return to Studio Overview"
-            className="glass-panel"
+            className="solid-panel"
             style={{
-              width: "44px",
-              height: "44px",
+              width: "40px",
+              height: "40px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: "10px",
-              border: "1px solid rgba(139, 92, 246, 0.35)",
-              color: "#f5f3ff",
-              background: "rgba(15, 10, 30, 0.7)",
+              borderRadius: "6px",
+              color: palette.text,
               cursor: "pointer",
             }}
           >
-            <Home size={20} />
+            <Home size={18} />
           </button>
           <span
-            className="font-orbitron"
+            className="heading-font"
             style={{
-              fontSize: "12px",
-              fontWeight: 800,
-              color: "#f5f3ff",
-              letterSpacing: "0.08em",
+              fontSize: "14px",
+              color: palette.text,
             }}
           >
-            BLENDER CLUB
+            Blender Club
           </span>
         </div>
       ) : (
@@ -80,62 +78,54 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ onOpenMenu, onHome }) => {
         >
           <div
             style={{
-              width: "7px",
-              height: "7px",
+              width: "6px",
+              height: "6px",
               borderRadius: "50%",
-              background: "#c084fc",
-              boxShadow: "0 0 10px #8b5cf6, 0 0 20px #c084fc",
+              background: palette.accent,
             }}
           />
           <span
-            className="font-orbitron"
+            className="heading-font"
             style={{
-              fontSize: "14px",
-              fontWeight: 800,
-              color: "#f5f3ff",
-              letterSpacing: "0.1em",
+              fontSize: "16px",
+              color: palette.text,
             }}
           >
-            BLENDER CLUB
+            Blender Club
           </span>
         </div>
       )}
 
-      {/* Top-Right: On phone: 44x44 icon button; on desktop: button with text */}
+      {/* Top-Right Menu button */}
       <button
         onClick={onOpenMenu}
         aria-label="Open navigation drawer"
-        className="glass-panel"
+        className="solid-panel"
         style={{
           pointerEvents: "auto",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
-          minWidth: "44px",
-          minHeight: "44px",
-          padding: isPhone ? "10px" : "8px 16px",
-          borderRadius: isPhone ? "10px" : "8px",
-          border: "1px solid rgba(139, 92, 246, 0.35)",
-          background: "rgba(15, 10, 30, 0.7)",
-          color: "#f5f3ff",
-          fontSize: "12px",
-          fontWeight: 600,
-          fontFamily: "Orbitron, sans-serif",
+          height: "38px",
+          padding: isPhone ? "0 12px" : "0 16px",
+          borderRadius: "6px",
+          color: palette.text,
+          fontSize: "13px",
+          fontWeight: 500,
+          fontFamily: "'Instrument Sans', sans-serif",
           cursor: "pointer",
-          letterSpacing: "0.06em",
+          transition: "background 0.15s ease",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "#c084fc";
-          e.currentTarget.style.boxShadow = "0 0 15px rgba(139, 92, 246, 0.4)";
+          e.currentTarget.style.backgroundColor = "rgba(35, 39, 47, 0.96)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.35)";
-          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.backgroundColor = "rgba(23, 26, 31, 0.94)";
         }}
       >
-        <Menu size={isPhone ? 20 : 16} />
-        {!isPhone && <span>MENU</span>}
+        <Menu size={16} />
+        {!isPhone && <span>Menu</span>}
       </button>
     </header>
   );

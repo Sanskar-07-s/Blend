@@ -1,8 +1,8 @@
 import React from "react";
 import { X, ChevronRight, ArrowRight } from "lucide-react";
 import type { SectionItem } from "../../data/sections";
-
 import type { QualityPreference, QualityTier } from "../../config/quality";
+import { getActivePalette } from "../../config/palette";
 
 interface NavigationDrawerProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   onChangePreference,
   onExitStudio,
 }) => {
+  const palette = getActivePalette();
   if (!isOpen) return null;
 
   return (
@@ -34,8 +35,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(5, 3, 10, 0.65)",
-        backdropFilter: "blur(8px)",
+        backgroundColor: "rgba(0, 0, 0, 0.65)",
         zIndex: 90,
         display: "flex",
         justifyContent: "flex-end",
@@ -44,29 +44,29 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
       onClick={onClose}
     >
       <div
-        className="glass-panel"
+        className="solid-panel"
         style={{
           width: "100%",
           maxWidth: "360px",
           height: "100%",
-          padding: "32px 24px",
+          padding: "28px 20px",
           display: "flex",
           flexDirection: "column",
-          gap: "24px",
-          borderLeft: "1px solid rgba(139, 92, 246, 0.35)",
-          boxShadow: "-10px 0 30px rgba(0, 0, 0, 0.8)",
-          transform: "translateX(0)",
-          transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          gap: "20px",
+          backgroundColor: "rgba(23, 26, 31, 0.98)",
+          borderLeft: "1px solid rgba(255, 255, 255, 0.10)",
+          borderRadius: 0,
+          boxShadow: "-12px 0 32px rgba(0, 0, 0, 0.6)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <h3 className="font-orbitron" style={{ fontSize: "16px", color: "#f5f3ff", fontWeight: 800 }}>
-              SECTIONS
+            <h3 className="heading-font" style={{ fontSize: "18px", color: palette.text }}>
+              Sections
             </h3>
-            <span style={{ fontSize: "12px", color: "#a1a1b5" }}>8 Spatial Waypoints</span>
+            <span style={{ fontSize: "13px", color: palette.textMuted }}>Room overview</span>
           </div>
 
           <button
@@ -74,9 +74,9 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
             aria-label="Close menu drawer"
             style={{
               background: "transparent",
-              border: "1px solid rgba(139, 92, 246, 0.3)",
-              color: "#f5f3ff",
-              borderRadius: "6px",
+              border: "1px solid rgba(255, 255, 255, 0.10)",
+              color: palette.text,
+              borderRadius: "4px",
               padding: "6px",
               cursor: "pointer",
               display: "flex",
@@ -89,7 +89,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
         </div>
 
         {/* 8 Sections List */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", overflowY: "auto", flex: 1 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", overflowY: "auto", flex: 1 }}>
           {sections.map((sec, idx) => {
             const isActive = idx === currentIndex;
             const num = String(idx + 1).padStart(2, "0");
@@ -106,40 +106,36 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "12px 14px",
-                  borderRadius: "8px",
+                  padding: "10px 12px",
+                  borderRadius: "4px",
                   background: isActive
-                    ? "rgba(139, 92, 246, 0.25)"
-                    : "rgba(15, 10, 30, 0.45)",
-                  border: `1px solid ${isActive ? "#c084fc" : "rgba(139, 92, 246, 0.15)"}`,
-                  boxShadow: isActive ? "0 0 16px rgba(139, 92, 246, 0.3)" : "none",
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "transparent",
+                  border: `1px solid ${isActive ? palette.hairline : "transparent"}`,
                   cursor: "pointer",
                   textAlign: "left",
-                  transition: "all 0.2s ease",
+                  transition: "background 0.15s ease",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <span
-                    className="font-orbitron"
+                    className="mono-font"
                     style={{
-                      fontSize: "13px",
-                      fontWeight: 800,
-                      color: isActive ? "#c084fc" : "#a1a1b5",
+                      fontSize: "12px",
+                      color: isActive ? palette.accent : palette.textMuted,
+                      fontWeight: 500,
                     }}
                   >
                     {num}
                   </span>
                   <div>
-                    <div style={{ fontSize: "14px", fontWeight: 600, color: isActive ? "#ffffff" : "#f5f3ff" }}>
+                    <div style={{ fontSize: "14px", fontWeight: 500, color: isActive ? palette.text : palette.textMuted }}>
                       {sec.title}
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#a1a1b5" }}>
-                      {sec.objectName}
                     </div>
                   </div>
                 </div>
 
-                <ChevronRight size={16} color={isActive ? "#c084fc" : "#a1a1b5"} />
+                <ChevronRight size={15} color={isActive ? palette.accent : palette.textMuted} />
               </button>
             );
           })}
@@ -157,37 +153,30 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               }
             }}
             aria-label="Exit to Club Site"
+            className="btn-secondary"
             style={{
-              display: "flex",
-              alignItems: "center",
               justifyContent: "space-between",
-              padding: "12px 14px",
-              borderRadius: "8px",
-              background: "linear-gradient(135deg, rgba(124, 58, 237, 0.35), rgba(217, 70, 239, 0.25))",
-              border: "1px solid rgba(192, 132, 252, 0.5)",
-              color: "#F5F3FF",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
+              width: "100%",
+              padding: "10px 14px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span className="font-orbitron" style={{ fontSize: "13px", fontWeight: 700, color: "#c084fc" }}>
-                EXIT TO SITE
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "14px", fontWeight: 500, color: palette.text }}>
+                Exit to club site
               </span>
-              <span style={{ fontSize: "11px", color: "#A8A3C7" }}>Full club portfolio</span>
             </div>
-            <ArrowRight size={16} color="#c084fc" />
+            <ArrowRight size={15} color={palette.textMuted} />
           </button>
         </div>
 
         {/* Quality Controls */}
-        <div style={{ borderTop: "1px solid rgba(139, 92, 246, 0.2)", paddingTop: "14px" }}>
+        <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.10)", paddingTop: "14px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "12px", fontFamily: "Orbitron, sans-serif", fontWeight: 700, color: "#f5f3ff" }}>
-              GRAPHICS QUALITY
+            <span style={{ fontSize: "12px", fontWeight: 500, color: palette.text }}>
+              Graphics quality
             </span>
-            <span style={{ fontSize: "10px", color: "#c084fc", fontWeight: 600 }}>
-              TIER: {activeTier.toUpperCase()}
+            <span className="mono-font" style={{ fontSize: "11px", color: palette.accent }}>
+              {activeTier}
             </span>
           </div>
 
@@ -206,18 +195,18 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
                   onClick={() => onChangePreference?.(mode)}
                   aria-label={`Set graphics quality to ${mode}`}
                   style={{
-                    minHeight: "36px",
-                    padding: "6px 4px",
-                    borderRadius: "6px",
-                    background: isSelected ? "rgba(139, 92, 246, 0.35)" : "rgba(15, 10, 30, 0.5)",
-                    border: `1px solid ${isSelected ? "#c084fc" : "rgba(139, 92, 246, 0.2)"}`,
-                    color: isSelected ? "#ffffff" : "#a1a1b5",
-                    fontSize: "11px",
-                    fontFamily: "Orbitron, sans-serif",
-                    fontWeight: isSelected ? 700 : 500,
+                    minHeight: "34px",
+                    padding: "4px",
+                    borderRadius: "4px",
+                    background: isSelected ? palette.accent : "rgba(255, 255, 255, 0.05)",
+                    border: "none",
+                    color: isSelected ? "#0F1115" : palette.textMuted,
+                    fontSize: "12px",
+                    fontFamily: "'Instrument Sans', sans-serif",
+                    fontWeight: isSelected ? 600 : 400,
                     cursor: "pointer",
-                    textTransform: "uppercase",
-                    transition: "all 0.2s ease",
+                    textTransform: "capitalize",
+                    transition: "all 0.15s ease",
                   }}
                 >
                   {mode}
@@ -227,8 +216,8 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
           </div>
         </div>
 
-        <div style={{ fontSize: "11px", color: "#a1a1b5", borderTop: "1px solid rgba(139, 92, 246, 0.2)", paddingTop: "12px" }}>
-          [Esc] to dismiss drawer • [G] to toggle debug 3D bboxes
+        <div className="mono-font" style={{ fontSize: "11px", color: palette.textMuted, borderTop: "1px solid rgba(255, 255, 255, 0.10)", paddingTop: "10px" }}>
+          Esc to close drawer
         </div>
       </div>
     </div>

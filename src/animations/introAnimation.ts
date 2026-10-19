@@ -11,6 +11,7 @@ export interface EmissiveStripsData {
   ceiling?: THREE.MeshStandardMaterial[];
   walls?: THREE.MeshStandardMaterial[];
   desk?: THREE.MeshStandardMaterial[];
+  screens?: THREE.MeshStandardMaterial[];
   sign?: THREE.MeshStandardMaterial[];
   shelf?: THREE.MeshStandardMaterial[];
 }
@@ -363,45 +364,105 @@ export function createAssemblyTimeline({
   });
 
   // Phase 5: LIGHTS ON in sequence & Camera pulls back (6.2 -> 7.5s)
-  const lightsStart = INTRO_TIMING.phase5LightsOn.start;
-  const lightsDur = INTRO_TIMING.phase5LightsOn.duration;
+  // Sequence: room lights fade up (ceiling, hemisphere, lamp), then desk LED, then screens wake, then sign flickers on once.
+  const lightsStart = INTRO_TIMING.phase5LightsOn.start; // 6.2s
+  const lightsDur = INTRO_TIMING.phase5LightsOn.duration;  // 1.3s
 
-  // Stagger key strip lights in sequence
-  const stripSequence: Array<{ key: keyof EmissiveStripsData; delay: number; target: number }> = [
-    { key: "ceiling", delay: 0.00, target: 1.5 },
-    { key: "walls",   delay: 0.18, target: 1.5 },
-    { key: "desk",    delay: 0.36, target: 1.5 },
-    { key: "sign",    delay: 0.54, target: 2.0 },
-    { key: "shelf",   delay: 0.72, target: 0.6 }, // Subtle shelf light (max 0.6)
-  ];
+  // 1. Room lights fade up (6.2s -> 6.7s)
+  if (accentLightRef) {
+    masterTl.fromTo(
+      accentLightRef,
+      { intensity: 0.1 },
+      {
+        intensity: 1.2,
+        duration: 0.5,
+        ease: "power2.out",
+      },
+      lightsStart
+    );
+  }
 
-  if (stripMaterials) {
-    stripSequence.forEach(({ key, delay, target }) => {
-      const mats = stripMaterials[key];
-      if (mats && mats.length > 0) {
-        // Pick primary material
-        const m = mats[0];
-        const sTime = lightsStart + delay;
-        masterTl.fromTo(
-          m,
-          { emissiveIntensity: 0.2 },
-          {
-            emissiveIntensity: target + 0.3,
-            duration: 0.15,
-            ease: "power2.out",
-          },
-          sTime
-        );
-        masterTl.to(
-          m,
-          {
-            emissiveIntensity: target,
-            duration: 0.35,
-            ease: "power2.inOut",
-          },
-          sTime + 0.15
-        );
-      }
+  // 2. Desk LED fades up (6.55s -> 6.85s) - cap 0.5
+  if (stripMaterials?.desk && stripMaterials.desk.length > 0) {
+    stripMaterials.desk.forEach((m) => {
+      masterTl.fromTo(
+        m,
+        { emissiveIntensity: 0.05 },
+        {
+          emissiveIntensity: 0.5,
+          duration: 0.3,
+          ease: "power2.out",
+        },
+        lightsStart + 0.35
+      );
+    });
+  }
+
+  // Shelf faint light (6.55s -> 6.85s) - cap 0.2
+  if (stripMaterials?.shelf && stripMaterials.shelf.length > 0) {
+    stripMaterials.shelf.forEach((m) => {
+      masterTl.fromTo(
+        m,
+        { emissiveIntensity: 0.02 },
+        {
+          emissiveIntensity: 0.2,
+          duration: 0.3,
+          ease: "power2.out",
+        },
+        lightsStart + 0.35
+      );
+    });
+  }
+
+  // 3. Screens wake up (6.85s -> 7.15s) - cap 1.0
+  if (stripMaterials?.screens && stripMaterials.screens.length > 0) {
+    stripMaterials.screens.forEach((m) => {
+      masterTl.fromTo(
+        m,
+        { emissiveIntensity: 0.1 },
+        {
+          emissiveIntensity: 1.0,
+          duration: 0.3,
+          ease: "power2.out",
+        },
+        lightsStart + 0.65
+      );
+    });
+  }
+
+  // 4. Sign flickers on once (7.15s -> 7.45s) - hero cap 1.6
+  if (stripMaterials?.sign && stripMaterials.sign.length > 0) {
+    stripMaterials.sign.forEach((m) => {
+      // Fast flicker: off -> flash -> slight dip -> settle on 1.6
+      const signStart = lightsStart + 0.95;
+      masterTl.fromTo(
+        m,
+        { emissiveIntensity: 0.0 },
+        {
+          emissiveIntensity: 1.9,
+          duration: 0.09,
+          ease: "power1.in",
+        },
+        signStart
+      );
+      masterTl.to(
+        m,
+        {
+          emissiveIntensity: 0.4,
+          duration: 0.08,
+          ease: "power1.out",
+        },
+        signStart + 0.09
+      );
+      masterTl.to(
+        m,
+        {
+          emissiveIntensity: 1.6,
+          duration: 0.15,
+          ease: "power2.out",
+        },
+        signStart + 0.17
+      );
     });
   }
 
@@ -419,24 +480,9 @@ export function createAssemblyTimeline({
     lightsStart
   );
 
-  if (accentLightRef) {
-    masterTl.to(
-      accentLightRef,
-      {
-        intensity: 1.2,
-        duration: lightsDur,
-        ease: "power2.out",
-      },
-      lightsStart
-    );
-  }
-
   return masterTl;
 }
 
-/**
- * Instantly snaps all groups to their rest transforms and camera to overview.
- */
 export function snapToRestPose({
   groups,
   restTransforms,
@@ -453,29 +499,42 @@ export function snapToRestPose({
   stripMaterials?: EmissiveStripsData;
 }) {
   groups.forEach((group, name) => {
+    gsap.killTweensOf(group.position);
+    gsap.killTweensOf(group.rotation);
+    gsap.killTweensOf(group.scale);
+
     const rest = restTransforms.get(name);
     if (rest) {
       group.position.copy(rest.position);
       group.rotation.copy(rest.rotation);
       group.scale.set(1, 1, 1);
       group.visible = true;
+      group.traverse((c) => {
+        c.visible = true;
+      });
+      group.updateMatrix();
+      group.updateMatrixWorld(true);
     }
   });
 
   if (stripMaterials) {
-    stripMaterials.ceiling?.forEach((m) => { m.emissiveIntensity = 1.5; });
-    stripMaterials.walls?.forEach((m) => { m.emissiveIntensity = 1.5; });
-    stripMaterials.desk?.forEach((m) => { m.emissiveIntensity = 1.5; });
-    stripMaterials.sign?.forEach((m) => { m.emissiveIntensity = 2.0; });
-    stripMaterials.shelf?.forEach((m) => { m.emissiveIntensity = 0.6; });
+    stripMaterials.ceiling?.forEach((m) => { m.emissiveIntensity = 0; });
+    stripMaterials.walls?.forEach((m) => { m.emissiveIntensity = 0; });
+    stripMaterials.desk?.forEach((m) => { m.emissiveIntensity = 0.5; });
+    stripMaterials.sign?.forEach((m) => { m.emissiveIntensity = 1.6; });
+    stripMaterials.shelf?.forEach((m) => { m.emissiveIntensity = 0.2; });
+    stripMaterials.screens?.forEach((m) => { m.emissiveIntensity = 1.0; });
   }
 
   if (camera && overviewCam) {
+    gsap.killTweensOf(camera.position);
     camera.position.set(...overviewCam.position);
     camera.lookAt(new THREE.Vector3(...overviewCam.target));
+    camera.updateMatrixWorld(true);
   }
 
   if (accentLightRef) {
     accentLightRef.intensity = 1.2;
   }
 }
+
