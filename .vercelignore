@@ -1,0 +1,18 @@
+# Blender files
+*.blend
+*.blend1
+*.backup.blend
+GamingRoom.backup.blend
+
+# Tests and scripts
+tests/
+test-results/
+playwright-report/
+screenshots/
+scripts/
+lighthouse-*.json
+
+# Docs and local
+.env
+.env*.local
+node_modules/

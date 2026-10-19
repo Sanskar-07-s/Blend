@@ -12,9 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env*.local
+
 # Blender raw working files (too large for git)
 *.blend
 *.blend1
+*.backup.blend
 
 # Editor directories and files
 .vscode/*
@@ -28,3 +33,4 @@ dist-ssr
 *.sw?
 test-results/
 playwright-report/
+lighthouse-*.json
