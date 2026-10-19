@@ -1,12 +1,14 @@
-import React, { useRef } from "react";
+import React from "react";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 
 interface PostProcessingEffectsProps {
   enabled?: boolean;
+  halfRes?: boolean;
 }
 
 export const PostProcessingEffects: React.FC<PostProcessingEffectsProps> = ({
   enabled = true,
+  halfRes = false,
 }) => {
   if (!enabled) return null;
 
@@ -20,12 +22,14 @@ export const PostProcessingEffects: React.FC<PostProcessingEffectsProps> = ({
           - High luminanceThreshold (0.88) so only true neons bloom without washing out shelf
           - MipmapBlur enabled
           - Controlled intensity (0.4)
+          - Half resolution on medium tier
       */}
       <Bloom
         luminanceThreshold={0.88}
         luminanceSmoothing={0.2}
-        intensity={0.4}
+        intensity={halfRes ? 0.35 : 0.4}
         mipmapBlur
+        resolutionScale={halfRes ? 0.5 : 1.0}
       />
     </EffectComposer>
   );

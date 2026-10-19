@@ -2,12 +2,17 @@ import React from "react";
 import { X, ChevronRight } from "lucide-react";
 import type { SectionItem } from "../../data/sections";
 
+import type { QualityPreference, QualityTier } from "../../config/quality";
+
 interface NavigationDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   sections: SectionItem[];
   currentIndex: number;
   onSelectSection: (index: number) => void;
+  preference?: QualityPreference;
+  activeTier?: QualityTier;
+  onChangePreference?: (pref: QualityPreference) => void;
 }
 
 export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
@@ -16,6 +21,9 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   sections,
   currentIndex,
   onSelectSection,
+  preference = "auto",
+  activeTier = "medium",
+  onChangePreference,
 }) => {
   if (!isOpen) return null;
 
@@ -133,6 +141,53 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               </button>
             );
           })}
+        </div>
+
+        {/* Quality Controls */}
+        <div style={{ borderTop: "1px solid rgba(139, 92, 246, 0.2)", paddingTop: "14px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "12px", fontFamily: "Orbitron, sans-serif", fontWeight: 700, color: "#f5f3ff" }}>
+              GRAPHICS QUALITY
+            </span>
+            <span style={{ fontSize: "10px", color: "#c084fc", fontWeight: 600 }}>
+              TIER: {activeTier.toUpperCase()}
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "6px",
+            }}
+          >
+            {(["auto", "low", "medium", "high"] as const).map((mode) => {
+              const isSelected = preference === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => onChangePreference?.(mode)}
+                  aria-label={`Set graphics quality to ${mode}`}
+                  style={{
+                    minHeight: "36px",
+                    padding: "6px 4px",
+                    borderRadius: "6px",
+                    background: isSelected ? "rgba(139, 92, 246, 0.35)" : "rgba(15, 10, 30, 0.5)",
+                    border: `1px solid ${isSelected ? "#c084fc" : "rgba(139, 92, 246, 0.2)"}`,
+                    color: isSelected ? "#ffffff" : "#a1a1b5",
+                    fontSize: "11px",
+                    fontFamily: "Orbitron, sans-serif",
+                    fontWeight: isSelected ? 700 : 500,
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {mode}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div style={{ fontSize: "11px", color: "#a1a1b5", borderTop: "1px solid rgba(139, 92, 246, 0.2)", paddingTop: "12px" }}>

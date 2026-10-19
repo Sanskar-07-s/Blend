@@ -97,6 +97,7 @@ export function createAssemblyTimeline({
   stripMaterials,
   onComplete,
   reducedMotion = false,
+  durationMultiplier = 1.0,
 }: {
   groups: Map<string, THREE.Object3D>;
   restTransforms: Map<string, GroupRestTransform>;
@@ -107,6 +108,7 @@ export function createAssemblyTimeline({
   stripMaterials?: EmissiveStripsData;
   onComplete: () => void;
   reducedMotion?: boolean;
+  durationMultiplier?: number;
 }): gsap.core.Timeline {
   const masterTl = gsap.timeline({
     onComplete: () => {
@@ -126,6 +128,10 @@ export function createAssemblyTimeline({
       onComplete();
     },
   });
+
+  if (durationMultiplier > 0 && durationMultiplier !== 1.0) {
+    masterTl.timeScale(1 / durationMultiplier);
+  }
 
   // Reduced motion: 1s fade-in of completed room
   if (reducedMotion) {

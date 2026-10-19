@@ -257,28 +257,41 @@ export const SECTIONS: SectionItem[] = [
   },
 ];
 
-// Compute camera framing dynamically given bounding box and FOV
+// Compute camera framing dynamically given bounding box, vertical FOV, and viewport aspect ratio
 export function computeFramingCamera(
   bbox: BoundingBox,
   fov: number = 48,
-  override?: SectionOverride
+  override?: SectionOverride,
+  aspect: number = 16 / 9
 ): { position: [number, number, number]; target: [number, number, number] } {
   const center = bbox.center;
   const size = bbox.size;
 
-  // Max dimension of the bounding box
-  const maxDim = Math.max(size[0], size[1], size[2]);
-  const fovRad = (fov * Math.PI) / 180;
-  
-  // Base distance using FOV formula: bbox size / (2 * tan(fov/2)) * 1.4
-  const baseDistance = (maxDim / (2 * Math.tan(fovRad / 2))) * 1.4;
+  const isPortrait = aspect < 1.0;
+  // Cap horizontal aspect for ultra-wide screens (e.g. 21:9) so objects don't appear tiny
+  const effectiveAspect = Math.min(aspect, 1.85);
+
+  const vFovRad = (fov * Math.PI) / 180;
+  // Horizontal FOV = 2 * atan(tan(vfov / 2) * aspect)
+  const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * effectiveAspect);
+
+  // Compute required distance for vertical fit
+  const dimV = Math.max(size[1], size[2] * 0.65);
+  const distV = dimV / (2 * Math.tan(vFovRad / 2));
+
+  // Compute required distance for horizontal fit
+  const dimH = Math.max(size[0], size[2] * 0.65);
+  const distH = dimH / (2 * Math.tan(hFovRad / 2));
+
+  // Take the larger distance so object fits both vertically and horizontally
+  const baseDistance = Math.max(distV, distH) * 1.35;
   const dist = baseDistance * (override?.distanceMultiplier ?? 1.25);
 
   // Azimuth & Elevation angles
   const azimuthRad = ((override?.azimuthDeg ?? 25) * Math.PI) / 180;
   const elevationRad = ((override?.elevationDeg ?? 12) * Math.PI) / 180;
 
-  // Camera direction from open side of room (+Z in glTF coordinates is towards open front)
+  // Camera direction from open side of room
   const dx = dist * Math.sin(azimuthRad) * Math.cos(elevationRad);
   const dy = dist * Math.sin(elevationRad);
   const dz = dist * Math.cos(azimuthRad) * Math.cos(elevationRad);
@@ -290,6 +303,23 @@ export function computeFramingCamera(
     center[2] + targetOffset[2],
   ];
 
+  if (isPortrait) {
+    // Portrait: Shift target downward so the focused object sits in the upper 55% of the viewport,
+    // safely above the bottom sheet content panel
+    target[1] -= dist * 0.22;
+  } else {
+    // Landscape/Desktop: Shift object left/right to leave room for the side content panel
+    const side = override?.preferredSide ?? "right";
+    const sideShift = dist * 0.16;
+    if (side === "left") {
+      // Content on left -> push 3D object to the right
+      target[0] -= sideShift;
+    } else {
+      // Content on right -> push 3D object to the left
+      target[0] += sideShift;
+    }
+  }
+
   const position: [number, number, number] = [
     target[0] + dx,
     target[1] + dy,
@@ -299,9 +329,40 @@ export function computeFramingCamera(
   return { position, target };
 }
 
-// Global overview camera computed from room bounding box
+// Compute overview camera dynamically fitting whole room in both portrait and landscape
+export function computeOverviewCamera(
+  roomBounds: BoundingBox,
+  fov: number = 48,
+  aspect: number = 16 / 9
+): { position: [number, number, number]; target: [number, number, number] } {
+  const rb = roomBounds;
+  const isPortrait = aspect < 1.0;
+  const clampedAspect = Math.min(aspect, 1.85);
+
+  const vFovRad = (fov * Math.PI) / 180;
+  const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * clampedAspect);
+
+  const distV = (rb.size[1] / (2 * Math.tan(vFovRad / 2))) * 1.1;
+  const distH = (rb.size[0] / (2 * Math.tan(hFovRad / 2))) * 1.1;
+  const dist = Math.max(distV, distH);
+
+  const targetY = isPortrait ? rb.center[1] - 0.7 : rb.center[1] - 0.2;
+  const camPos: [number, number, number] = [
+    rb.center[0] + 0.5,
+    rb.center[1] + dist * 0.35,
+    rb.center[2] + dist * 0.95,
+  ];
+  const camTarget: [number, number, number] = [
+    rb.center[0],
+    targetY,
+    rb.center[2],
+  ];
+
+  return { position: camPos, target: camTarget };
+}
+
+// Global default overview camera fallback
 export const OVERVIEW_CAMERA = {
-  // Room center is [5.0, 3.5, 4.95], open front corner is at X ~ 5.0, Y ~ 5.8, Z ~ 12.8
   position: [5.0, 5.8, 12.8] as [number, number, number],
   target: [5.0, 3.0, 4.5] as [number, number, number],
 };

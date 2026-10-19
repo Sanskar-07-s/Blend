@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useThree } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import * as THREE from "three";
 import gsap from "gsap";
 import { applyEmissiveLimits } from "../../config/emissiveLimits";
@@ -22,6 +23,8 @@ interface UnifiedRoomModelProps {
   onPrewarmComplete?: () => void;
   onIntroComplete?: () => void;
   reducedMotion?: boolean;
+  modelUrl?: string;
+  introDurationMultiplier?: number;
 }
 
 const ASSEMBLY_GROUP_NAMES = [
@@ -47,6 +50,8 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
   onPrewarmComplete,
   onIntroComplete,
   reducedMotion = false,
+  modelUrl = "/models/room.glb",
+  introDurationMultiplier = 1.0,
 }) => {
   const [model, setModel] = useState<THREE.Group | null>(null);
   const { gl, scene, camera } = useThree();
@@ -73,9 +78,10 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
 
     const loader = new GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
+    loader.setMeshoptDecoder(MeshoptDecoder);
 
     loader.load(
-      "/models/room.glb",
+      modelUrl,
       (gltf) => {
         if (!active) return;
         const root = gltf.scene;
@@ -257,7 +263,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
     return () => {
       active = false;
     };
-  }, [gl, scene, camera, onModelLoaded, onPrewarmComplete]);
+  }, [gl, scene, camera, modelUrl, onModelLoaded, onPrewarmComplete]);
 
   // 2. Assembly intro timeline trigger
   useEffect(() => {
@@ -286,6 +292,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
           onIntroComplete?.();
         },
         reducedMotion,
+        durationMultiplier: introDurationMultiplier,
       });
 
       masterTimelineRef.current = tl;

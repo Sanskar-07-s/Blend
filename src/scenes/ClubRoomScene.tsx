@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, AdaptiveDpr, PerformanceMonitor, Preload } from "@react-three/drei";
 import * as THREE from "three";
@@ -8,6 +8,7 @@ import { ParticleField } from "../components/3d/ParticleField";
 import { CameraController } from "../components/3d/CameraController";
 import { DebugAnchorOverlay } from "../components/3d/DebugAnchorOverlay";
 import { PostProcessingEffects } from "../components/3d/PostProcessingEffects";
+import { TIER_CONFIG, type QualityTier } from "../config/quality";
 import type { NavState, AnchorsData } from "../hooks/useSceneNavigation";
 import type { SectionItem } from "../data/sections";
 
@@ -22,11 +23,24 @@ interface ClubRoomSceneProps {
   onTransitionComplete: (state: "overview" | "section") => void;
   onPrewarmComplete?: () => void;
   reducedMotion?: boolean;
-  postProcessingEnabled?: boolean;
+  tier?: QualityTier;
+  onDegradeTier?: () => void;
+  isPaused?: boolean;
 }
 
-function RenderMetricsCollector() {
-  useFrame(({ gl }) => {
+function RenderMetricsCollector({
+  navState,
+  tier,
+  onDegradeTier,
+}: {
+  navState: NavState;
+  tier: QualityTier;
+  onDegradeTier?: () => void;
+}) {
+  const lowFpsStartTimeRef = useRef<number | null>(null);
+
+  useFrame(({ gl }, delta) => {
+    // 1. Export scene metrics to debug object
     if (typeof window !== "undefined" && (window as any).__bc) {
       const calls = gl.info.render.calls;
       const tris = gl.info.render.triangles;
@@ -40,8 +54,35 @@ function RenderMetricsCollector() {
         textures: textures > 0 ? textures : current.textures || 150,
         geometries: gl.info.memory.geometries,
       };
+      (window as any).__bc.tier = tier;
+    }
+
+    // 2. PerformanceMonitor: Step tier down if average FPS stays under 45 for 3s
+    // Never steps back up during a transition, and only triggers if not currently transitioning/intro
+    const instantaneousFps = delta > 0 ? 1 / delta : 60;
+    const now = performance.now();
+
+    if (instantaneousFps < 45) {
+      if (lowFpsStartTimeRef.current === null) {
+        lowFpsStartTimeRef.current = now;
+      } else if (now - lowFpsStartTimeRef.current >= 3000) {
+        // Under 45 FPS for full 3 seconds
+        if (
+          tier !== "low" &&
+          navState !== "transitioning" &&
+          navState !== "intro" &&
+          onDegradeTier
+        ) {
+          lowFpsStartTimeRef.current = null;
+          onDegradeTier();
+        }
+      }
+    } else {
+      // Recovered above 45 FPS
+      lowFpsStartTimeRef.current = null;
     }
   });
+
   return null;
 }
 
@@ -56,8 +97,12 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
   onTransitionComplete,
   onPrewarmComplete,
   reducedMotion = false,
-  postProcessingEnabled = true,
+  tier = "high",
+  onDegradeTier,
+  isPaused = false,
 }) => {
+  const config = TIER_CONFIG[tier] || TIER_CONFIG.high;
+
   return (
     <div style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}>
       <Canvas
@@ -68,21 +113,37 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           position: overviewCamera.position,
         }}
         gl={{
-          antialias: false,
+          antialias: config.antialias,
           powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.2,
           outputColorSpace: THREE.SRGBColorSpace,
         }}
-        dpr={1}
-        shadows
+        dpr={config.dpr}
+        shadows={config.shadows}
+        frameloop={isPaused ? "never" : "always"}
         onCreated={({ gl }) => {
-          gl.shadowMap.autoUpdate = false;
-          gl.shadowMap.needsUpdate = true;
+          if (config.shadows) {
+            gl.shadowMap.autoUpdate = false;
+            gl.shadowMap.needsUpdate = true;
+          }
         }}
       >
-        <RenderMetricsCollector />
-        <PerformanceMonitor />
+        <RenderMetricsCollector
+          navState={navState}
+          tier={tier}
+          onDegradeTier={onDegradeTier}
+        />
+
+        <PerformanceMonitor
+          onDecline={() => {
+            if (navState !== "transitioning" && navState !== "intro") {
+              onDegradeTier?.();
+            }
+          }}
+          threshold={0.75}
+        />
+
         <AdaptiveDpr pixelated />
 
         <color attach="background" args={["#05030a"]} />
@@ -91,9 +152,10 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
 
         <SceneLighting
           activeAccentColor={currentSection?.accentColor ?? "#8b5cf6"}
+          shadows={config.shadows}
         />
 
-        <ParticleField />
+        <ParticleField count={config.particles} />
 
         <UnifiedRoomModel
           navState={navState}
@@ -102,6 +164,8 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           onPrewarmComplete={onPrewarmComplete}
           onIntroComplete={() => onTransitionComplete("overview")}
           reducedMotion={reducedMotion}
+          modelUrl={config.modelUrl}
+          introDurationMultiplier={config.introDurationMultiplier}
         />
 
         <Preload all />
@@ -122,11 +186,13 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           reducedMotion={reducedMotion}
         />
 
-        <PostProcessingEffects enabled={postProcessingEnabled} />
+        <PostProcessingEffects
+          enabled={config.bloom}
+          halfRes={config.bloomHalfRes}
+        />
       </Canvas>
     </div>
   );
 };
 
 export default ClubRoomScene;
-

@@ -81,7 +81,9 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       return;
     }
 
-    const arcHeight = 0.35;
+    const isIdleResize = (navState === "overview" || navState === "section") && !isGoingOverview;
+    const duration = isIdleResize ? 0.4 : 1.8;
+    const arcHeight = isIdleResize ? 0.0 : 0.35;
     const tweenObj = { t: 0 };
 
     const tl = gsap.timeline({
@@ -91,7 +93,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
         camera.position.z = THREE.MathUtils.lerp(_startCamPos.z, _targetCamPos.z, progress);
 
         const baseY = THREE.MathUtils.lerp(_startCamPos.y, _targetCamPos.y, progress);
-        const arc = Math.sin(progress * Math.PI) * arcHeight;
+        const arc = arcHeight > 0 ? Math.sin(progress * Math.PI) * arcHeight : 0;
         camera.position.y = baseY + arc;
 
         _currentLookAt.lerpVectors(_startLookAt, _targetLookAt, progress);
@@ -101,7 +103,9 @@ export const CameraController: React.FC<CameraControllerProps> = ({
         camera.position.set(...targetPos);
         _currentLookAt.set(...targetLook);
         camera.lookAt(_currentLookAt);
-        onTransitionComplete(isGoingToOverview ? "overview" : "section");
+        if (!isIdleResize) {
+          onTransitionComplete(isGoingToOverview ? "overview" : "section");
+        }
         currentTimeline.current = null;
       },
     });
@@ -110,8 +114,8 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
     tl.to(tweenObj, {
       t: 1,
-      duration: 1.8,
-      ease: "power3.inOut",
+      duration,
+      ease: isIdleResize ? "power2.out" : "power3.inOut",
     });
 
     return () => {

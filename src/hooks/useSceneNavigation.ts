@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { SECTIONS, computeFramingCamera, OVERVIEW_CAMERA, type SectionItem } from "../data/sections";
+import {
+  SECTIONS,
+  computeFramingCamera,
+  computeOverviewCamera,
+  OVERVIEW_CAMERA,
+  type SectionItem,
+} from "../data/sections";
 
 export type NavState = "loading" | "intro" | "overview" | "transitioning" | "section";
 
@@ -42,61 +48,65 @@ export function useSceneNavigation() {
   const totalSections = sections.length;
   const currentSection = sections[currentSectionIndex] ?? sections[0];
 
-  useEffect(() => {
-    document.body.dataset.navState = navState;
-    document.body.dataset.section = currentSection?.id || "";
-    if (typeof window !== "undefined" && (window as any).__bc) {
-      (window as any).__bc.state = navState;
-      (window as any).__bc.section = currentSection?.id || "";
+  const updateCameraFraming = useCallback((data: AnchorsData) => {
+    if (typeof window === "undefined") return;
+    const aspect = window.innerWidth / window.innerHeight;
+
+    if (data.roomBounds) {
+      const oc = computeOverviewCamera(data.roomBounds, 48, aspect);
+      setOverviewCam(oc);
     }
-  }, [navState, currentSection]);
+
+    setSections((prev) =>
+      prev.map((sec) => {
+        const anchorSec = data.sections[sec.id];
+        if (anchorSec && anchorSec.bbox) {
+          const framing = computeFramingCamera(anchorSec.bbox, 48, sec.override, aspect);
+          return {
+            ...sec,
+            bbox: anchorSec.bbox,
+            cameraPosition: framing.position,
+            cameraTarget: framing.target,
+          };
+        }
+        return sec;
+      })
+    );
+  }, []);
+
 
   useEffect(() => {
     fetch("/models/anchors.json")
       .then((res) => res.json())
       .then((data: AnchorsData) => {
         setAnchors(data);
-
-        if (data.roomBounds) {
-          const rb = data.roomBounds;
-          const fov = 48;
-          const maxDim = Math.max(rb.size[0], rb.size[1], rb.size[2]);
-          const fovRad = (fov * Math.PI) / 180;
-          const dist = (maxDim / (2 * Math.tan(fovRad / 2))) * 1.05;
-
-          const camPos: [number, number, number] = [
-            rb.center[0] + 0.5,
-            rb.center[1] + dist * 0.35,
-            rb.center[2] + dist * 0.95,
-          ];
-          const camTarget: [number, number, number] = [
-            rb.center[0],
-            rb.center[1] - 0.2,
-            rb.center[2],
-          ];
-          setOverviewCam({ position: camPos, target: camTarget });
-        }
-
-        setSections((prev) =>
-          prev.map((sec) => {
-            const anchorSec = data.sections[sec.id];
-            if (anchorSec && anchorSec.bbox) {
-              const framing = computeFramingCamera(anchorSec.bbox, 48, sec.override);
-              return {
-                ...sec,
-                bbox: anchorSec.bbox,
-                cameraPosition: framing.position,
-                cameraTarget: framing.target,
-              };
-            }
-            return sec;
-          })
-        );
+        updateCameraFraming(data);
       })
       .catch((err) => {
         console.warn("Could not load anchors.json:", err);
       });
-  }, []);
+  }, [updateCameraFraming]);
+
+  // Recompute camera framing smoothly on resize and orientation change
+  useEffect(() => {
+    if (!anchors) return;
+
+    let resizeTimer: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        updateCameraFraming(anchors);
+      }, 50);
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    return () => {
+      clearTimeout(resizeTimer);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, [anchors, updateCameraFraming]);
 
   const onTransitionComplete = useCallback((reachedState: "overview" | "section") => {
     if (transitionTimerRef.current) {
@@ -172,6 +182,20 @@ export function useSceneNavigation() {
     }
     goTo(currentSectionIndex - 1);
   }, [navState, currentSectionIndex, goTo, home]);
+
+  useEffect(() => {
+    document.body.dataset.navState = navState;
+    document.body.dataset.section = currentSection?.id || "";
+    if (typeof window !== "undefined") {
+      (window as any).__bc = (window as any).__bc || {};
+      (window as any).__bc.state = navState;
+      (window as any).__bc.section = currentSection?.id || "";
+      (window as any).__bc.goTo = goTo;
+      (window as any).__bc.next = next;
+      (window as any).__bc.back = back;
+      (window as any).__bc.home = home;
+    }
+  }, [navState, currentSection, goTo, next, back, home]);
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen((prev) => !prev);
