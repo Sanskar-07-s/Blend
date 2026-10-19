@@ -13,15 +13,11 @@ if (typeof window !== 'undefined') {
 }
 
 if (typeof window !== 'undefined') {
-  const frameTimes: number[] = [];
-  const rollingDeltas: number[] = [];
-  let lastTime = performance.now();
-
   (window as any).__bc = {
     state: 'loading',
     section: '',
     fps: 60,
-    frameTimes,
+    frameTimes: [],
     renderInfo: {
       calls: 0,
       triangles: 0,
@@ -31,22 +27,6 @@ if (typeof window !== 'undefined') {
       geometries: 0,
     },
   };
-
-  const measureLoop = (now: number) => {
-    const dt = now - lastTime;
-    lastTime = now;
-    if (dt > 0 && dt < 1000) {
-      frameTimes.push(dt);
-      rollingDeltas.push(dt);
-      if (rollingDeltas.length > 60) rollingDeltas.shift();
-      const avgDt = rollingDeltas.reduce((a, b) => a + b, 0) / rollingDeltas.length;
-      if ((window as any).__bc) {
-        (window as any).__bc.fps = Math.round((1000 / avgDt) * 10) / 10;
-      }
-    }
-    requestAnimationFrame(measureLoop);
-  };
-  requestAnimationFrame(measureLoop);
 }
 
 createRoot(document.getElementById('root')!).render(

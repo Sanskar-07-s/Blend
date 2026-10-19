@@ -15,6 +15,7 @@ import {
 } from "../../animations/introAnimation";
 import type { NavState } from "../../hooks/useSceneNavigation";
 import { MODEL_MANIFEST } from "../../config/models";
+import { SECTIONS, OVERVIEW_CAMERA } from "../../data/sections";
 
 interface UnifiedRoomModelProps {
   navState: NavState;
@@ -195,11 +196,25 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
 
                   m.side = THREE.DoubleSide;
 
-                  // Textures GPU init
-                  if (m.map) gl.initTexture(m.map);
-                  if (m.normalMap) gl.initTexture(m.normalMap);
-                  if (m.roughnessMap) gl.initTexture(m.roughnessMap);
-                  if (m.metalnessMap) gl.initTexture(m.metalnessMap);
+                  // Force-initialize all material texture channels immediately
+                  const texSlots = [
+                    "map",
+                    "normalMap",
+                    "roughnessMap",
+                    "metalnessMap",
+                    "emissiveMap",
+                    "aoMap",
+                    "lightMap",
+                    "alphaMap",
+                    "bumpMap",
+                    "displacementMap",
+                  ];
+                  texSlots.forEach((slot) => {
+                    const tex = (m as any)[slot];
+                    if (tex && tex.isTexture) {
+                      gl.initTexture(tex);
+                    }
+                  });
 
                   const matName = (m.name || "").toLowerCase();
 
@@ -290,34 +305,113 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
         setModel(root);
         onModelLoaded?.();
 
-        // Pre-warm behind loading screen & 1-second benchmark (20 frames)
-        if (!prewarmedRef.current && gl.compileAsync) {
-          gl.compileAsync(root, camera)
-            .then(() => {
-              // 20-frame pre-intro benchmark
-              const benchStart = performance.now();
-              for (let i = 0; i < 20; i++) {
-                gl.render(scene, camera);
+        // Complete Pre-Warm: render scene offscreen with all groups visible at rest poses across overview and all section lighting states
+        if (!prewarmedRef.current) {
+          const runPrewarm = async () => {
+            try {
+              // 1. Force initialize all unique textures onto the GPU
+              uniqueTextures.forEach((tex) => {
+                try {
+                  gl.initTexture(tex);
+                } catch {
+                  // ignore
+                }
+              });
+
+              // 2. Temporarily set all groups to rest pose and visible for full shader compilation
+              groups.forEach((grp, name) => {
+                const rest = restTransforms.get(name);
+                if (rest) {
+                  grp.position.copy(rest.position);
+                  grp.rotation.copy(rest.rotation);
+                  grp.scale.copy(rest.scale);
+                  grp.visible = true;
+                  grp.traverse((c) => (c.visible = true));
+                }
+              });
+
+              // 3. Compile async and render default screen framebuffer (behind loading screen)
+              camera.position.set(...overviewCamera.position);
+              camera.lookAt(...overviewCamera.target);
+              camera.updateMatrixWorld();
+              gl.setRenderTarget(null);
+              if (gl.compileAsync) {
+                await gl.compileAsync(scene, camera);
               }
-              const benchDuration = performance.now() - benchStart;
-              const avgFrameMs = benchDuration / 20;
-              console.log(
-                `[PreIntroBenchmark] 20 frames took ${benchDuration.toFixed(1)}ms (avg ${avgFrameMs.toFixed(1)}ms/frame)`
+              gl.render(scene, camera);
+
+              // 4. Compile & render all section lighting states & camera angles on default framebuffer
+              for (const sec of SECTIONS) {
+                if (sec.cameraPosition && sec.cameraTarget) {
+                  camera.position.set(...sec.cameraPosition);
+                  camera.lookAt(...sec.cameraTarget);
+                  camera.updateMatrixWorld();
+                  if (gl.compileAsync) {
+                    await gl.compileAsync(scene, camera);
+                  }
+                  gl.render(scene, camera);
+                }
+              }
+
+              // 5. Single offscreen render pass with groups at rest poses as required
+              const offscreen = new THREE.WebGLRenderTarget(256, 256);
+              gl.setRenderTarget(offscreen);
+              camera.position.set(...overviewCamera.position);
+              camera.lookAt(...overviewCamera.target);
+              camera.updateMatrixWorld();
+              gl.render(scene, camera);
+              gl.setRenderTarget(null);
+              offscreen.dispose();
+
+              // 6. Pre-render intro starting camera and scattered poses so intro first frame is instantaneous
+              const camStartPos = new THREE.Vector3(
+                overviewCamera.position[0],
+                overviewCamera.position[1] + 2.5,
+                overviewCamera.position[2] + 4.5
               );
-              if (avgFrameMs > 40) {
-                console.warn(
-                  `[PreIntroBenchmark] Frame time > 40ms (${avgFrameMs.toFixed(1)}ms). Triggering automatic tier drop.`
-                );
-                onDegradeTier?.();
+              const lookTarget = new THREE.Vector3(...overviewCamera.target);
+              camera.position.copy(camStartPos);
+              camera.lookAt(lookTarget);
+              camera.updateMatrixWorld();
+
+              groups.forEach((grp, name) => {
+                const rest = restTransforms.get(name);
+                const startInfo = GROUP_START_OFFSETS[name] || { offset: [0, 15, 0], rot: [0, 0, 0] };
+                if (rest) {
+                  grp.position.set(
+                    rest.position.x + startInfo.offset[0],
+                    rest.position.y + startInfo.offset[1],
+                    rest.position.z + startInfo.offset[2]
+                  );
+                  grp.rotation.set(
+                    rest.rotation.x + startInfo.rot[0],
+                    rest.rotation.y + startInfo.rot[1],
+                    rest.rotation.z + startInfo.rot[2]
+                  );
+                  grp.scale.set(0.35, 0.35, 0.35);
+                  grp.visible = true;
+                }
+              });
+
+              if (gl.compileAsync) {
+                await gl.compileAsync(scene, camera);
               }
+              gl.render(scene, camera);
+
+              // Restore camera to overview
+              camera.position.set(...overviewCamera.position);
+              camera.lookAt(...overviewCamera.target);
+              camera.updateMatrixWorld();
 
               prewarmedRef.current = true;
 
+              // 7. If state is overview or section, keep rest pose; otherwise restore scattered start poses
               if (
                 introCompletedRef.current ||
                 navState === "overview" ||
                 navState === "section" ||
-                (typeof window !== "undefined" && ((window as any).__bc?.state === "overview" || (window as any).__bc?.state === "section"))
+                (typeof window !== "undefined" &&
+                  ((window as any).__bc?.state === "overview" || (window as any).__bc?.state === "section"))
               ) {
                 snapToRestPose({
                   groups,
@@ -325,7 +419,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
                   stripMaterials: stripMaterialsRef.current,
                 });
               } else {
-                // Hide room at scattered start poses until intro starts
+                // Restore scattered start poses until intro begins
                 groups.forEach((grp, name) => {
                   const rest = restTransforms.get(name);
                   const startInfo = GROUP_START_OFFSETS[name] || { offset: [0, 15, 0], rot: [0, 0, 0] };
@@ -346,11 +440,24 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
                 });
               }
 
+              // Record constant GPU memory and texture metrics
+              if (typeof window !== "undefined" && (window as any).__bc) {
+                (window as any).__bc.renderInfo = {
+                  calls: meshCount,
+                  triangles: Math.round(totalTriangles),
+                  textures: uniqueTextures.size || gl.info.memory.textures,
+                  gpuMemoryMb: gpuMemoryMb,
+                };
+              }
+
               onPrewarmComplete?.();
-            })
-            .catch(() => {
+            } catch (err) {
+              console.warn("Prewarm failed, proceeding with fallback:", err);
               onPrewarmComplete?.();
-            });
+            }
+          };
+
+          runPrewarm();
         } else {
           onPrewarmComplete?.();
         }

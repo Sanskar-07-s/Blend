@@ -212,16 +212,19 @@ export const ExperiencePage: React.FC = () => {
     setIsPrewarmed(true);
   }, []);
 
-  // Safety fallback: ensure isPrewarmed is set within 2.5s even if async shader compile is delayed
+  // Safety fallback in case WebGL context loses event or errors: 30s
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsPrewarmed(true);
-    }, 2500);
+    }, 30000);
     return () => clearTimeout(timer);
   }, []);
 
   // Enter studio logic with sessionStorage intro tracking
   const handleEnter = () => {
+    if (typeof window !== "undefined" && (window as any).__bc) {
+      (window as any).__bc.frameTimes = [];
+    }
     setHasEntered(true);
     const introSeen = sessionStorage.getItem("bc_intro_seen");
     if (introSeen === "true") {
