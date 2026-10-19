@@ -36,9 +36,14 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   const { camera, invalidate } = useThree();
   const currentTimeline = useRef<gsap.core.Timeline | null>(null);
 
+  const navStateRef = useRef<NavState>(navState);
+  useEffect(() => {
+    navStateRef.current = navState;
+  }, [navState]);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (navState !== "section" && navState !== "overview") return;
+      if (navStateRef.current !== "section" && navStateRef.current !== "overview") return;
       _mouseTarget.x = (e.clientX / window.innerWidth - 0.5) * 2;
       _mouseTarget.y = (e.clientY / window.innerHeight - 0.5) * 2;
       invalidate();
@@ -46,7 +51,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [navState, invalidate]);
+  }, [invalidate]);
 
   const prevNavStateRef = useRef<NavState>(navState);
 
@@ -139,7 +144,9 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     return () => {
       if (currentTimeline.current) {
         currentTimeline.current.kill();
+        currentTimeline.current = null;
       }
+      gsap.killTweensOf(tweenObj);
     };
   }, [navState, isGoingOverview, currentSection, overviewCamera, reducedMotion, camera, onTransitionComplete]);
 

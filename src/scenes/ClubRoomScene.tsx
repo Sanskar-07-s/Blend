@@ -40,13 +40,53 @@ function RenderMetricsCollector({
   onDegradeTier?: () => void;
 }) {
   const lowFpsStartTimeRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(performance.now());
+  const frameDeltasRef = useRef<number[]>([]);
+  const detectedRefreshRateRef = useRef<number>(60);
+  const framesSampledRef = useRef<number>(0);
 
-  useFrame(({ gl, scene, camera }, delta) => {
-    const instantaneousFps = delta > 0 ? 1 / delta : 60;
+  useFrame(({ gl, scene, camera }) => {
     const now = performance.now();
+    const dt = now - lastTimeRef.current;
+    lastTimeRef.current = now;
 
-    // 1. Export scene metrics to debug object (zero-allocation in useFrame)
-    if (typeof window !== "undefined" && (window as any).__bc) {
+    // Real rendered frame count from Three.js renderer
+    const realFrames = gl.info.render.frame;
+
+    if (dt > 0 && dt < 500) {
+      frameDeltasRef.current.push(dt);
+      if (frameDeltasRef.current.length > 120) {
+        frameDeltasRef.current.shift();
+      }
+
+      // Detect display refresh rate from initial samples
+      if (framesSampledRef.current < 60) {
+        framesSampledRef.current++;
+        const estimatedHz = Math.round(1000 / dt);
+        if (estimatedHz >= 135) detectedRefreshRateRef.current = 144;
+        else if (estimatedHz >= 110) detectedRefreshRateRef.current = 120;
+        else if (estimatedHz >= 85) detectedRefreshRateRef.current = 90;
+        else if (estimatedHz >= 55) detectedRefreshRateRef.current = 60;
+      }
+    }
+
+    // Rolling average FPS over recent frames
+    const deltas = frameDeltasRef.current;
+    const avgDt = deltas.length > 0 ? deltas.reduce((a, b) => a + b, 0) / deltas.length : 16.6;
+    const currentFps = Math.round((1000 / avgDt) * 10) / 10;
+
+    // Compute 1% lows from slowest 1% of frames in window
+    let onePercentLow = currentFps;
+    if (deltas.length >= 10) {
+      const sortedDeltas = [...deltas].sort((a, b) => b - a);
+      const p99Index = Math.min(Math.floor(deltas.length * 0.01), deltas.length - 1);
+      const p99Dt = sortedDeltas[p99Index];
+      onePercentLow = Math.round((1000 / p99Dt) * 10) / 10;
+    }
+
+    // 1. Export scene metrics to debug object
+    if (typeof window !== "undefined") {
+      (window as any).__bc = (window as any).__bc || {};
       const calls = gl.info.render.calls;
       const tris = gl.info.render.triangles;
       const textures = gl.info.memory.textures;
@@ -66,23 +106,21 @@ function RenderMetricsCollector({
       rInfo.points = gl.info.render.points;
       rInfo.lines = gl.info.render.lines;
       if (textures > 0) rInfo.textures = textures;
+
       (window as any).__bc.tier = tier;
-      (window as any).__bc.fps = Math.round(instantaneousFps * 10) / 10;
-      if (!(window as any).__bc.frameTimes) {
-        (window as any).__bc.frameTimes = [];
-      }
-      if (delta > 0 && delta < 0.5) {
-        const ft = (window as any).__bc.frameTimes;
-        ft.push(delta * 1000);
-        if (ft.length > 120) ft.shift();
-      }
+      (window as any).__bc.fps = currentFps;
+      (window as any).__bc.realFrames = realFrames;
+      (window as any).__bc.refreshRate = detectedRefreshRateRef.current;
+      (window as any).__bc.onePercentLow = onePercentLow;
+      (window as any).__bc.frameTimes = deltas;
+
       (window as any).__gl = gl;
       (window as any).__scene = scene;
       (window as any).__camera = camera;
     }
 
     // 2. PerformanceMonitor: Step tier down if average FPS stays under 45 for 3s
-    if (instantaneousFps < 45) {
+    if (currentFps < 45) {
       if (lowFpsStartTimeRef.current === null) {
         lowFpsStartTimeRef.current = now;
       } else if (now - lowFpsStartTimeRef.current >= 3000) {
