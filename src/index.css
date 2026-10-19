@@ -42,11 +42,12 @@ canvas {
   -webkit-touch-callout: none;
 }
 
-/* Low-tier override: Avoid expensive backdrop-filter blur on low end mobile GPUs */
-.tier-low .glass-panel {
+/* Override: Avoid expensive backdrop-filter blur on mobile and integrated GPUs */
+.tier-low .glass-panel,
+.tier-medium .glass-panel {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  background: rgba(12, 8, 24, 0.95) !important;
+  background: rgba(14, 10, 28, 0.95) !important;
 }
 
 h1, h2, h3, h4, .font-orbitron {

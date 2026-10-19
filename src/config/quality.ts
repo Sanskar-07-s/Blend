@@ -22,7 +22,7 @@ export const TIER_CONFIG: Record<QualityTier, TierSettings> = {
     tier: "high",
     dpr: 1.5,
     bloom: true,
-    bloomHalfRes: false,
+    bloomHalfRes: true,
     particles: 500,
     reflectiveFloor: true,
     shadows: true,
@@ -33,10 +33,10 @@ export const TIER_CONFIG: Record<QualityTier, TierSettings> = {
   },
   medium: {
     tier: "medium",
-    dpr: 1.25,
-    bloom: true,
-    bloomHalfRes: true,
-    particles: 250,
+    dpr: 1.0,
+    bloom: false,
+    bloomHalfRes: false,
+    particles: 150,
     reflectiveFloor: false,
     shadows: false,
     modelUrl: "/models/room.glb",
@@ -75,7 +75,11 @@ export function setStoredPreference(pref: QualityPreference): void {
 
 /**
  * Detect hardware capability and return appropriate QualityTier.
- * Accounts for GPU tier, device memory, concurrency, screen size, touch, Save-Data, and motion preference.
+ * Accounts for GPU tier, renderer string, device memory, concurrency, screen size, touch, Save-Data, and motion preference.
+ * Rules:
+ *  - Discrete or Apple/modern desktop GPUs -> high
+ *  - Integrated GPUs like Intel UHD / Iris on desktop/laptop -> medium
+ *  - Phones and low-spec mobile devices -> low
  */
 export async function detectDeviceTier(): Promise<QualityTier> {
   if (typeof window !== "undefined") {
@@ -83,13 +87,15 @@ export async function detectDeviceTier(): Promise<QualityTier> {
     const params = new URLSearchParams(window.location.search);
     const qParam = params.get("quality")?.toLowerCase();
     if (qParam === "low" || qParam === "medium" || qParam === "high") {
-      return qParam;
+      console.log(`[QualityTier] Override via URL parameter: ${qParam}`);
+      return qParam as QualityTier;
     }
 
     // 2. User preference in localStorage
     const pref = getStoredPreference();
     if (pref !== "auto") {
-      return pref;
+      console.log(`[QualityTier] User preference from storage: ${pref}`);
+      return pref as QualityTier;
     }
   }
 
@@ -103,35 +109,63 @@ export async function detectDeviceTier(): Promise<QualityTier> {
   const prefersReducedMotion =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Immediate low-tier rules (battery/data saver, low memory, budget phones)
-  if (saveData || prefersReducedMotion || mem < 3 || cores <= 2 || (isTouch && isPhoneSize && mem <= 4)) {
+  // Immediate low-tier rules (battery/data saver, low memory, phones)
+  if (saveData || prefersReducedMotion || mem < 3 || cores <= 2 || (isTouch && isPhoneSize)) {
+    console.log("[QualityTier] Mobile phone / low-resource device detected -> Tier: low");
     return "low";
   }
 
+  // Read unmasked renderer string
+  let rendererString = "UNKNOWN";
+  if (typeof document !== "undefined") {
+    try {
+      const c = document.createElement("canvas");
+      const gl = c.getContext("webgl2") || c.getContext("webgl");
+      if (gl) {
+        const ext = gl.getExtension("WEBGL_debug_renderer_info");
+        rendererString = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  let finalTier: QualityTier = "medium";
+  let gpuName = rendererString;
+  let gpuTierNum = 1;
+
   try {
     const gpu = await getGPUTier();
-    if (gpu.tier === 0 || gpu.tier === 1 || (gpu.isMobile && gpu.tier < 3)) {
-      return "low";
-    }
-    if (gpu.tier === 2) {
-      if (isTouch || isPhoneSize || mem < 6 || cores < 6) {
-        return "medium";
+    gpuName = gpu.gpu || rendererString;
+    gpuTierNum = gpu.tier;
+
+    if (gpu.isMobile || (isTouch && isPhoneSize)) {
+      finalTier = gpu.tier >= 3 ? "medium" : "low";
+    } else {
+      // Desktop / Laptop
+      const isIntelIntegrated = /intel|uhd|iris|hd graphics/i.test(gpuName);
+      const isDiscrete = /nvidia|geforce|rtx|gtx|amd|radeon|apple|m1|m2|m3|m4/i.test(gpuName);
+
+      if (isIntelIntegrated) {
+        finalTier = "medium";
+      } else if (isDiscrete || gpu.tier >= 3) {
+        finalTier = mem >= 6 && cores >= 6 ? "high" : "medium";
+      } else {
+        finalTier = "low";
       }
-      return "medium";
-    }
-    if (gpu.tier >= 3) {
-      if (mem >= 6 && cores >= 6 && !isPhoneSize) {
-        return "high";
-      }
-      return "medium";
     }
   } catch (e) {
     console.warn("GPU tier detection failed, using fallback metrics:", e);
+    const isIntel = /intel|uhd|iris/i.test(rendererString);
+    if (isIntel || (mem >= 4 && cores >= 4 && !isPhoneSize)) {
+      finalTier = "medium";
+    } else {
+      finalTier = "low";
+    }
   }
 
-  if (mem >= 8 && cores >= 8 && !isTouch && !isPhoneSize) return "high";
-  if (mem >= 4 && cores >= 4) return "medium";
-  return "low";
+  console.log(`[QualityTier] GPU: "${gpuName}" | Tier number: ${gpuTierNum} | Final Tier: ${finalTier}`);
+  return finalTier;
 }
 
 /**

@@ -28,7 +28,16 @@ export function App() {
 
   // Quality Tier State
   const [preference, setPreference] = useState<QualityPreference>(() => getStoredPreference());
-  const [tier, setTier] = useState<QualityTier>("high");
+  const [tier, setTier] = useState<QualityTier>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("quality")?.toLowerCase();
+      if (q === "low" || q === "medium" || q === "high") return q as QualityTier;
+      const pref = getStoredPreference();
+      if (pref !== "auto") return pref as QualityTier;
+    }
+    return "medium";
+  });
   const [sceneKey, setSceneKey] = useState(0);
 
   // Robustness: Context loss & Tab pause

@@ -40,34 +40,51 @@ function RenderMetricsCollector({
 }) {
   const lowFpsStartTimeRef = useRef<number | null>(null);
 
-  useFrame(({ gl }, delta) => {
-    // 1. Export scene metrics to debug object
+  useFrame(({ gl, scene, camera }, delta) => {
+    const instantaneousFps = delta > 0 ? 1 / delta : 60;
+    const now = performance.now();
+
+    // 1. Export scene metrics to debug object (zero-allocation in useFrame)
     if (typeof window !== "undefined" && (window as any).__bc) {
       const calls = gl.info.render.calls;
       const tris = gl.info.render.triangles;
       const textures = gl.info.memory.textures;
-      const current = (window as any).__bc.renderInfo || {};
-      (window as any).__bc.renderInfo = {
-        calls: calls > 1 ? calls : current.calls || 0,
-        triangles: tris > 1 ? tris : current.triangles || 0,
-        points: gl.info.render.points,
-        lines: gl.info.render.lines,
-        textures: textures > 0 ? textures : current.textures || 150,
-        geometries: gl.info.memory.geometries,
-      };
+      let rInfo = (window as any).__bc.renderInfo;
+      if (!rInfo) {
+        rInfo = (window as any).__bc.renderInfo = {
+          calls: 0,
+          triangles: 0,
+          points: 0,
+          lines: 0,
+          textures: 0,
+          geometries: 0,
+        };
+      }
+      if (calls > 1) rInfo.calls = calls;
+      if (tris > 1) rInfo.triangles = tris;
+      rInfo.points = gl.info.render.points;
+      rInfo.lines = gl.info.render.lines;
+      if (textures > 0) rInfo.textures = textures;
       (window as any).__bc.tier = tier;
+      (window as any).__bc.fps = Math.round(instantaneousFps * 10) / 10;
+      if (!(window as any).__bc.frameTimes) {
+        (window as any).__bc.frameTimes = [];
+      }
+      if (delta > 0 && delta < 0.5) {
+        const ft = (window as any).__bc.frameTimes;
+        ft.push(delta * 1000);
+        if (ft.length > 120) ft.shift();
+      }
+      (window as any).__gl = gl;
+      (window as any).__scene = scene;
+      (window as any).__camera = camera;
     }
 
     // 2. PerformanceMonitor: Step tier down if average FPS stays under 45 for 3s
-    // Never steps back up during a transition, and only triggers if not currently transitioning/intro
-    const instantaneousFps = delta > 0 ? 1 / delta : 60;
-    const now = performance.now();
-
     if (instantaneousFps < 45) {
       if (lowFpsStartTimeRef.current === null) {
         lowFpsStartTimeRef.current = now;
       } else if (now - lowFpsStartTimeRef.current >= 3000) {
-        // Under 45 FPS for full 3 seconds
         if (
           tier !== "low" &&
           navState !== "transitioning" &&
@@ -79,7 +96,6 @@ function RenderMetricsCollector({
         }
       }
     } else {
-      // Recovered above 45 FPS
       lowFpsStartTimeRef.current = null;
     }
   });
@@ -87,19 +103,22 @@ function RenderMetricsCollector({
   return null;
 }
 
-function MasterClockSync() {
-  const { invalidate } = useThree();
+function ShadowController({ shadows }: { shadows: boolean }) {
+  const { gl } = useThree();
 
   useEffect(() => {
-    gsap.ticker.lagSmoothing(0);
-    const tick = () => {
-      invalidate();
-    };
-    gsap.ticker.add(tick);
-    return () => {
-      gsap.ticker.remove(tick);
-    };
-  }, [invalidate]);
+    gl.shadowMap.enabled = shadows;
+    gl.shadowMap.autoUpdate = false;
+    if (shadows) {
+      gl.shadowMap.needsUpdate = true;
+    }
+  }, [shadows, gl]);
+
+  useFrame(() => {
+    if (!shadows && gl.shadowMap.enabled) {
+      gl.shadowMap.enabled = false;
+    }
+  });
 
   return null;
 }
@@ -148,7 +167,7 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           }
         }}
       >
-        <MasterClockSync />
+        <ShadowController shadows={config.shadows} />
 
         <RenderMetricsCollector
           navState={navState}
@@ -164,8 +183,6 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           }}
           threshold={0.75}
         />
-
-        <AdaptiveDpr pixelated />
 
         <color attach="background" args={["#05030A"]} />
         <fog attach="fog" args={["#05030A", 12, 45]} />
@@ -188,6 +205,7 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           reducedMotion={reducedMotion}
           modelUrl={config.modelUrl}
           introDurationMultiplier={config.introDurationMultiplier}
+          onDegradeTier={onDegradeTier}
         />
 
         <Preload all />

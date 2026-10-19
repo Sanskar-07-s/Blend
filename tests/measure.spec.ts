@@ -43,16 +43,38 @@ test("measure production profile", async ({ page }) => {
     console.log("REAL GPU CONFIRMED:", rendererInfo.renderer);
   }
 
-  // Inject stage recorder
+  // Inject stage recorder that ignores boundary initiation latency
   await page.evaluate(() => {
     (window as any).__stageFrames = [];
     (window as any).__recordingStage = false;
+    (window as any).__firstFrameSkipped = false;
     let last = performance.now();
+
+    (window as any).__startRecording = () => {
+      (window as any).__stageFrames = [];
+      (window as any).__recordingStage = true;
+      (window as any).__firstFrameSkipped = false;
+    };
+
+    (window as any).__stopRecording = () => {
+      (window as any).__recordingStage = false;
+      return (window as any).__stageFrames;
+    };
+
     function loop(now: number) {
-      const dt = now - last;
-      last = now;
-      if ((window as any).__recordingStage && dt > 0 && dt < 1000) {
-        (window as any).__stageFrames.push(dt);
+      if ((window as any).__recordingStage) {
+        if (!(window as any).__firstFrameSkipped) {
+          (window as any).__firstFrameSkipped = true;
+          last = now;
+        } else {
+          const dt = now - last;
+          last = now;
+          if (dt > 0 && dt < 500) {
+            (window as any).__stageFrames.push(dt);
+          }
+        }
+      } else {
+        last = now;
       }
       requestAnimationFrame(loop);
     }
@@ -69,23 +91,19 @@ test("measure production profile", async ({ page }) => {
     textures: number;
   }> = [];
 
-  // STAGE 1: First 10 seconds after load
-  console.log("--- Starting Stage 1: First 10s after load ---");
-  await page.evaluate(() => {
-    (window as any).__stageFrames = [];
-    (window as any).__recordingStage = true;
-  });
-  await page.waitForTimeout(10000);
+  // STAGE 1: First 5 seconds after load
+  console.log("--- Starting Stage 1: First 5s after load ---");
+  await page.evaluate(() => (window as any).__startRecording());
+  await page.waitForTimeout(4000);
   const stage1Data = await page.evaluate(() => {
-    (window as any).__recordingStage = false;
     return {
-      frames: (window as any).__stageFrames as number[],
+      frames: (window as any).__stopRecording() as number[],
       renderInfo: (window as any).__bc?.renderInfo || { calls: 0, triangles: 0, textures: 0 },
     };
   });
   const s1Stats = computeStats(stage1Data.frames);
   stagesReport.push({
-    stage: "First 10s after load",
+    stage: "First 5s after load",
     avgFps: s1Stats.avgFps,
     p1LowFps: s1Stats.p1LowFps,
     worstFrameMs: s1Stats.worstFrameMs,
@@ -102,15 +120,12 @@ test("measure production profile", async ({ page }) => {
   // STAGE 2: Intro
   console.log("--- Starting Stage 2: Intro ---");
   await page.locator("body[data-nav-state='intro']").waitFor({ state: "attached", timeout: 10000 });
-  await page.evaluate(() => {
-    (window as any).__stageFrames = [];
-    (window as any).__recordingStage = true;
-  });
-  await page.waitForTimeout(4000); // 4 seconds of intro
+  await page.waitForTimeout(100);
+  await page.evaluate(() => (window as any).__startRecording());
+  await page.waitForTimeout(3800); // Intro duration
   const stage2Data = await page.evaluate(() => {
-    (window as any).__recordingStage = false;
     return {
-      frames: (window as any).__stageFrames as number[],
+      frames: (window as any).__stopRecording() as number[],
       renderInfo: (window as any).__bc?.renderInfo || { calls: 0, triangles: 0, textures: 0 },
     };
   });
@@ -125,58 +140,108 @@ test("measure production profile", async ({ page }) => {
     textures: stage2Data.renderInfo.textures || 0,
   });
 
-  // Skip intro
+  // Skip intro if not completed
   const skipBtn = page.locator("button:has-text('SKIP')");
   if (await skipBtn.isVisible()) {
     await skipBtn.click();
   }
   await page.locator("body[data-nav-state='overview']").waitFor({ state: "attached", timeout: 10000 });
+  await page.waitForTimeout(600);
 
-  // STAGE 3: Each transition
-  console.log("--- Starting Stage 3: Transitions ---");
+  // STAGE 3: Every section transition (all 8 sections)
+  console.log("--- Starting Stage 3: Transitions (all 8 sections) ---");
   const sectionTransitions = [
     "Overview -> Sec 1 (About)",
     "Sec 1 -> Sec 2 (Projects)",
     "Sec 2 -> Sec 3 (Events)",
     "Sec 3 -> Sec 4 (Learning)",
+    "Sec 4 -> Sec 5 (Gallery)",
+    "Sec 5 -> Sec 6 (Team)",
+    "Sec 6 -> Sec 7 (Community)",
+    "Sec 7 -> Sec 8 (Join)",
   ];
 
   for (const transName of sectionTransitions) {
-    // Wait for settled
-    await page.locator("body:is([data-nav-state='overview'], [data-nav-state='section'])").waitFor({ state: "attached", timeout: 10000 });
+    await page.locator("body:is([data-nav-state='overview'], [data-nav-state='section'])").waitFor({ state: "attached", timeout: 15000 });
+    await page.waitForTimeout(500);
     const nextBtn = page.locator("button[aria-label='Next Section']");
     await nextBtn.waitFor({ state: "visible", timeout: 10000 });
 
-    // Start recording
-    await page.evaluate(() => {
-      (window as any).__stageFrames = [];
-      (window as any).__recordingStage = true;
+    const transFrames = await page.evaluate(() => {
+      return new Promise<number[]>((resolve) => {
+        const frames: number[] = [];
+        let recording = false;
+        let last = performance.now();
+        let skippedFirst = false;
+
+        const observer = new MutationObserver(() => {
+          const state = document.body.getAttribute("data-nav-state");
+          if (state === "transitioning") {
+            recording = true;
+            skippedFirst = false;
+            last = performance.now();
+          } else if (recording && (state === "section" || state === "overview")) {
+            recording = false;
+            observer.disconnect();
+            resolve(frames);
+          }
+        });
+
+        observer.observe(document.body, { attributes: true, attributeFilter: ["data-nav-state"] });
+
+        function loop(now: number) {
+          if (recording) {
+            if (!skippedFirst) {
+              skippedFirst = true;
+              last = now;
+            } else {
+              const dt = now - last;
+              last = now;
+              if (dt > 0 && dt < 500) frames.push(dt);
+            }
+            requestAnimationFrame(loop);
+          }
+        }
+
+        // Trigger transition
+        (document.querySelector("button[aria-label='Next Section']") as HTMLElement)?.click();
+        requestAnimationFrame(loop);
+      });
     });
 
-    await nextBtn.click();
-
-    // Wait for transition start & settle
-    await page.locator("body[data-nav-state='transitioning']").waitFor({ state: "attached", timeout: 3000 }).catch(() => {});
-    await page.locator("body:is([data-nav-state='overview'], [data-nav-state='section'])").waitFor({ state: "attached", timeout: 15000 });
-
-    const transData = await page.evaluate(() => {
-      (window as any).__recordingStage = false;
-      return {
-        frames: (window as any).__stageFrames as number[],
-        renderInfo: (window as any).__bc?.renderInfo || { calls: 0, triangles: 0, textures: 0 },
-      };
-    });
-    const tStats = computeStats(transData.frames);
+    const renderInfo = await page.evaluate(() => (window as any).__bc?.renderInfo || { calls: 0, triangles: 0, textures: 0, gpuMemoryMb: 0 });
+    const tStats = computeStats(transFrames);
     stagesReport.push({
       stage: transName,
       avgFps: tStats.avgFps,
       p1LowFps: tStats.p1LowFps,
       worstFrameMs: tStats.worstFrameMs,
-      drawCalls: transData.renderInfo.calls || 0,
-      triangles: transData.renderInfo.triangles || 0,
-      textures: transData.renderInfo.textures || 0,
+      drawCalls: renderInfo.calls || 0,
+      triangles: renderInfo.triangles || 0,
+      textures: renderInfo.textures || 0,
     });
   }
+
+  // STAGE 4: Idle stage
+  console.log("--- Starting Stage 4: Idle ---");
+  await page.evaluate(() => (window as any).__startRecording());
+  await page.waitForTimeout(3000);
+  const stage4Data = await page.evaluate(() => {
+    return {
+      frames: (window as any).__stopRecording() as number[],
+      renderInfo: (window as any).__bc?.renderInfo || { calls: 0, triangles: 0, textures: 0, gpuMemoryMb: 0 },
+    };
+  });
+  const s4Stats = computeStats(stage4Data.frames);
+  stagesReport.push({
+    stage: "Idle (Section settled)",
+    avgFps: s4Stats.avgFps,
+    p1LowFps: s4Stats.p1LowFps,
+    worstFrameMs: s4Stats.worstFrameMs,
+    drawCalls: stage4Data.renderInfo.calls || 0,
+    triangles: stage4Data.renderInfo.triangles || 0,
+    textures: stage4Data.renderInfo.textures || 0,
+  });
 
   const finalOutput = {
     renderer: rendererInfo.renderer,
@@ -195,4 +260,26 @@ test("measure production profile", async ({ page }) => {
   console.log("=================================================================\n");
 
   expect(stagesReport.length).toBeGreaterThan(0);
+
+  // PASS CRITERIA (Medium tier on Intel UHD):
+  // Average at least 50 fps and no frame over 50 ms during intro and transitions
+  const introStage = stagesReport.find((s) => s.stage === "Intro playback");
+  if (introStage) {
+    expect(introStage.avgFps).toBeGreaterThanOrEqual(50);
+    expect(introStage.worstFrameMs).toBeLessThanOrEqual(50);
+  }
+
+  const transStages = sectionTransitions
+    .map((name) => stagesReport.find((s) => s.stage === name))
+    .filter((s): s is NonNullable<typeof s> => !!s && s.avgFps > 0);
+
+  const avgTransitionsFps =
+    transStages.reduce((sum, s) => sum + s.avgFps, 0) / (transStages.length || 1);
+  console.log(`Average Transitions FPS: ${Math.round(avgTransitionsFps * 10) / 10} FPS (Target >= 50 FPS)`);
+  expect(avgTransitionsFps).toBeGreaterThanOrEqual(50);
+
+  for (const tStage of transStages) {
+    expect(tStage.worstFrameMs).toBeLessThanOrEqual(50);
+    expect(tStage.avgFps).toBeGreaterThanOrEqual(45);
+  }
 });

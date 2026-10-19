@@ -29,7 +29,7 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
   const isTablet = windowWidth >= 640 && windowWidth <= 1024;
   const isRight = section.preferredSide === "left";
 
-  const useBlur = tier !== "low";
+  const useBlur = tier === "high";
 
   // Common panel style
   const panelBackground = useBlur ? "rgba(15, 10, 30, 0.78)" : "rgba(12, 8, 24, 0.96)";

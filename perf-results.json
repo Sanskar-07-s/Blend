@@ -2,61 +2,106 @@
   "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
   "vendor": "Google Inc. (Intel)",
   "isSoftware": false,
-  "timestamp": "2026-10-19T09:42:49.668Z",
+  "timestamp": "2026-10-19T11:29:31.613Z",
   "stages": [
     {
-      "stage": "First 10s after load",
-      "avgFps": 102,
-      "p1LowFps": 5.9,
-      "worstFrameMs": 409.6,
-      "drawCalls": 316,
-      "triangles": 5265712,
-      "textures": 136
+      "stage": "First 5s after load",
+      "avgFps": 119.1,
+      "p1LowFps": 7.9,
+      "worstFrameMs": 437.4,
+      "drawCalls": 8,
+      "triangles": 9600,
+      "textures": 11
     },
     {
       "stage": "Intro playback",
-      "avgFps": 11.8,
-      "p1LowFps": 2.4,
-      "worstFrameMs": 423.4,
-      "drawCalls": 609,
-      "triangles": 10457688,
-      "textures": 149
+      "avgFps": 102.3,
+      "p1LowFps": 47.5,
+      "worstFrameMs": 21.3,
+      "drawCalls": 50,
+      "triangles": 87758,
+      "textures": 11
     },
     {
       "stage": "Overview -> Sec 1 (About)",
-      "avgFps": 5.3,
-      "p1LowFps": 1.6,
-      "worstFrameMs": 617.9,
-      "drawCalls": 609,
-      "triangles": 10457688,
-      "textures": 149
+      "avgFps": 50.4,
+      "p1LowFps": 35.7,
+      "worstFrameMs": 28,
+      "drawCalls": 23,
+      "triangles": 61827,
+      "textures": 11
     },
     {
       "stage": "Sec 1 -> Sec 2 (Projects)",
-      "avgFps": 9.2,
-      "p1LowFps": 2.4,
-      "worstFrameMs": 416.6,
-      "drawCalls": 609,
-      "triangles": 10457688,
-      "textures": 149
+      "avgFps": 60.9,
+      "p1LowFps": 47.4,
+      "worstFrameMs": 21.1,
+      "drawCalls": 24,
+      "triangles": 59362,
+      "textures": 11
     },
     {
       "stage": "Sec 2 -> Sec 3 (Events)",
-      "avgFps": 5.7,
-      "p1LowFps": 1.2,
-      "worstFrameMs": 867.8,
-      "drawCalls": 609,
-      "triangles": 10457688,
-      "textures": 149
+      "avgFps": 60.9,
+      "p1LowFps": 47.2,
+      "worstFrameMs": 21.2,
+      "drawCalls": 28,
+      "triangles": 65822,
+      "textures": 11
     },
     {
       "stage": "Sec 3 -> Sec 4 (Learning)",
-      "avgFps": 10.4,
-      "p1LowFps": 2.8,
-      "worstFrameMs": 354.1,
-      "drawCalls": 322,
-      "triangles": 9513860,
-      "textures": 251
+      "avgFps": 53.9,
+      "p1LowFps": 35.8,
+      "worstFrameMs": 27.9,
+      "drawCalls": 50,
+      "triangles": 87758,
+      "textures": 11
+    },
+    {
+      "stage": "Sec 4 -> Sec 5 (Gallery)",
+      "avgFps": 48.7,
+      "p1LowFps": 35.8,
+      "worstFrameMs": 27.9,
+      "drawCalls": 26,
+      "triangles": 31051,
+      "textures": 11
+    },
+    {
+      "stage": "Sec 5 -> Sec 6 (Team)",
+      "avgFps": 45,
+      "p1LowFps": 35.7,
+      "worstFrameMs": 28,
+      "drawCalls": 43,
+      "triangles": 81378,
+      "textures": 11
+    },
+    {
+      "stage": "Sec 6 -> Sec 7 (Community)",
+      "avgFps": 48.7,
+      "p1LowFps": 35.7,
+      "worstFrameMs": 28,
+      "drawCalls": 34,
+      "triangles": 77602,
+      "textures": 11
+    },
+    {
+      "stage": "Sec 7 -> Sec 8 (Join)",
+      "avgFps": 50.8,
+      "p1LowFps": 35.8,
+      "worstFrameMs": 27.9,
+      "drawCalls": 47,
+      "triangles": 86002,
+      "textures": 11
+    },
+    {
+      "stage": "Idle (Section settled)",
+      "avgFps": 140.3,
+      "p1LowFps": 44.2,
+      "worstFrameMs": 27.5,
+      "drawCalls": 47,
+      "triangles": 86002,
+      "textures": 11
     }
   ]
 }

@@ -232,8 +232,8 @@ group_root_mapping = {
     'group_sign': ['Gamer neon  sign'],
     'group_props': [
         'Acer Nitro 7 Gaming Laptop', 'Gaming Mouse', 'Gaming Mousepad 01',
-        'Razer kraken headset gaming', 'rgb gaming keyboard', 'Framed gaming art',
-        'Empty.011', 'Individual Book Collection 1', 'Modern Design Book Pack',
+        'Razer kraken headset gaming', 'rgb gaming keyboard ', 'rgb gaming keyboard', 'keyboard', 'keys',
+        'Framed gaming art', 'Empty.011', 'Individual Book Collection 1', 'Modern Design Book Pack',
         'Stacked set of books', 'Game Cases Pack 5', 'PS5 games', 'Xbox one games'
     ],
 }
@@ -274,11 +274,7 @@ bpy.ops.export_scene.gltf(
     export_yup=True,
     export_image_format='JPEG',
     export_jpeg_quality=85,
-    export_draco_mesh_compression_enable=True,
-    export_draco_mesh_compression_level=7,
-    export_draco_position_quantization=14,
-    export_draco_normal_quantization=10,
-    export_draco_texcoord_quantization=12
+    export_draco_mesh_compression_enable=False
 )
 
 size_mb = os.path.getsize(glb_path) / (1024 * 1024)

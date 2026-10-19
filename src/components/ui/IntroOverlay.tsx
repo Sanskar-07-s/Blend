@@ -75,8 +75,7 @@ export const IntroOverlay: React.FC<IntroOverlayProps> = ({ onSkip }) => {
             letterSpacing: "0.08em",
             boxShadow: "0 0 15px rgba(168, 85, 247, 0.3)",
             border: "1px solid rgba(168, 85, 247, 0.4)",
-            background: "rgba(15, 10, 30, 0.75)",
-            backdropFilter: "blur(8px)",
+            background: "rgba(15, 10, 30, 0.92)",
           }}
         >
           <span>SKIP INTRO</span>

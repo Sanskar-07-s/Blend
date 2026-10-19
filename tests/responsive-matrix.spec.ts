@@ -113,17 +113,7 @@ test.describe("Device Emulation Matrix", () => {
         await page.setExtraHTTPHeaders({ "User-Agent": dev.userAgent });
       }
 
-      // 2. Apply 4x CPU throttling for phone runs via CDP
-      if (dev.isPhone) {
-        try {
-          const client = await context.newCDPSession(page);
-          await client.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-          console.log(`[${dev.name}] Applied 4x CPU Throttling`);
-        } catch (e) {
-          console.warn("Could not apply CPU throttling via CDP:", e);
-        }
-      }
-
+      // Note: CPU throttling is NOT used as per instructions (measure real GPU honestly)
       const consoleErrors: string[] = [];
       page.on("console", (msg) => {
         if (msg.type() === "error" && !msg.text().includes("favicon")) {
@@ -256,11 +246,19 @@ test.describe("Device Emulation Matrix", () => {
       matrixResults.push(result);
       console.log(`RESULT [${dev.name}]:`, JSON.stringify(result));
 
-      // Append to JSON matrix file
       fs.writeFileSync(
         path.join(process.cwd(), "test-results", "matrix-summary.json"),
         JSON.stringify(matrixResults, null, 2)
       );
+
+      // Responsive matrix pass/fail thresholds:
+      // Phone low tier >= 45 fps, laptop/desktop >= 50 fps, ultrawide >= 45 fps
+      expect(consoleErrors).toHaveLength(0);
+      if (dev.isPhone || dev.viewport.width > 2560) {
+        expect(perfMetrics.avgFps).toBeGreaterThanOrEqual(45);
+      } else {
+        expect(perfMetrics.avgFps).toBeGreaterThanOrEqual(50);
+      }
     });
   }
 });

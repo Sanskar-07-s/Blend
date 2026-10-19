@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useThree } from "@react-three/fiber";
+import { useThree, useFrame } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
@@ -25,6 +25,7 @@ interface UnifiedRoomModelProps {
   reducedMotion?: boolean;
   modelUrl?: string;
   introDurationMultiplier?: number;
+  onDegradeTier?: () => void;
 }
 
 const ASSEMBLY_GROUP_NAMES = [
@@ -52,12 +53,14 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
   reducedMotion = false,
   modelUrl = "/models/room.glb",
   introDurationMultiplier = 1.0,
+  onDegradeTier,
 }) => {
   const [model, setModel] = useState<THREE.Group | null>(null);
   const { gl, scene, camera } = useThree();
 
   const prewarmedRef = useRef(false);
   const groupsRef = useRef<Map<string, THREE.Object3D>>(new Map());
+  const groupSpheresRef = useRef<Map<string, THREE.Sphere>>(new Map());
   const restTransformsRef = useRef<Map<string, GroupRestTransform>>(new Map());
   const hasCapturedRestRef = useRef(false);
   const hasIntroPlayedRef = useRef(false);
@@ -90,6 +93,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
         const root = gltf.scene;
 
         const groups = new Map<string, THREE.Object3D>();
+        const groupSpheres = new Map<string, THREE.Sphere>();
         const restTransforms = new Map<string, GroupRestTransform>();
         const groupMaterials = new Map<string, THREE.MeshStandardMaterial[]>();
         const stripMaterials: EmissiveStripsData = {
@@ -112,9 +116,16 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
                 scale: groupNode.scale.clone(),
               });
               groupMaterials.set(name, []);
+
+              const box = new THREE.Box3().setFromObject(groupNode);
+              const sphere = new THREE.Sphere();
+              box.getBoundingSphere(sphere);
+              sphere.radius = Math.max(sphere.radius * 1.35, 2.5);
+              groupSpheres.set(name, sphere);
             }
           });
           restTransformsRef.current = restTransforms;
+          groupSpheresRef.current = groupSpheres;
           hasCapturedRestRef.current = true;
         } else {
           ASSEMBLY_GROUP_NAMES.forEach((name) => {
@@ -134,17 +145,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
           if ((child as THREE.Mesh).isMesh) {
             meshCount++;
             const mesh = child as THREE.Mesh;
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-
-            const geom = mesh.geometry;
-            if (geom) {
-              if (geom.index) {
-                totalTriangles += geom.index.count / 3;
-              } else if (geom.attributes.position) {
-                totalTriangles += geom.attributes.position.count / 3;
-              }
-            }
+            mesh.frustumCulled = true;
 
             // Find parent assembly group
             let parent: THREE.Object3D | null = mesh.parent;
@@ -157,11 +158,38 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
               parent = parent.parent;
             }
 
+            // Only key structural objects cast shadows to eliminate 600+ duplicate shadow pass calls
+            const isShadowCaster =
+              groupName === "group_desk" ||
+              groupName === "group_chair" ||
+              groupName === "group_pc";
+            mesh.castShadow = isShadowCaster;
+            mesh.receiveShadow = true;
+
+            const geom = mesh.geometry;
+            if (geom) {
+              if (geom.index) {
+                totalTriangles += geom.index.count / 3;
+              } else if (geom.attributes.position) {
+                totalTriangles += geom.attributes.position.count / 3;
+              }
+            }
+
             if (mesh.material) {
               const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
               mats.forEach((mat) => {
                 if ((mat as THREE.MeshStandardMaterial).isMeshStandardMaterial) {
                   const m = mat as THREE.MeshStandardMaterial;
+                  
+                  // CRITICAL: Disable material.transmission so Three.js does NOT render a duplicate
+                  // full-scene transmission FBO pass every frame! Use alpha transparency instead.
+                  if ((m as any).transmission && (m as any).transmission > 0) {
+                    (m as any).transmission = 0;
+                    m.transparent = true;
+                    m.opacity = 0.3;
+                    m.roughness = 0.05;
+                  }
+
                   m.side = THREE.DoubleSide;
 
                   // Textures GPU init
@@ -222,22 +250,63 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
         groupMaterialsRef.current = groupMaterials;
         stripMaterialsRef.current = stripMaterials;
 
+        // Calculate unique textures and GPU texture memory
+        const uniqueTextures = new Set<THREE.Texture>();
+        root.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            const m = (child as THREE.Mesh).material;
+            const mats = Array.isArray(m) ? m : [m];
+            mats.forEach((mat) => {
+              if (mat) {
+                ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap"].forEach((key) => {
+                  const tex = (mat as any)[key];
+                  if (tex && tex.isTexture) uniqueTextures.add(tex);
+                });
+              }
+            });
+          }
+        });
+        let gpuTextureMemoryBytes = 0;
+        uniqueTextures.forEach((tex) => {
+          if (tex.image && tex.image.width && tex.image.height) {
+            gpuTextureMemoryBytes += tex.image.width * tex.image.height * 4 * 1.33;
+          }
+        });
+        const gpuMemoryMb = Math.round((gpuTextureMemoryBytes / (1024 * 1024)) * 10) / 10;
+
         if (typeof window !== "undefined" && (window as any).__bc) {
           (window as any).__bc.renderInfo = {
             calls: meshCount,
             triangles: Math.round(totalTriangles),
-            textures: gl.info.memory.textures || 150,
+            textures: uniqueTextures.size || gl.info.memory.textures,
+            gpuMemoryMb: gpuMemoryMb,
           };
         }
 
         setModel(root);
         onModelLoaded?.();
 
-        // Pre-warm behind loading screen
+        // Pre-warm behind loading screen & 1-second benchmark (20 frames)
         if (!prewarmedRef.current && gl.compileAsync) {
           gl.compileAsync(root, camera)
             .then(() => {
-              gl.render(scene, camera);
+              // 20-frame pre-intro benchmark
+              const benchStart = performance.now();
+              for (let i = 0; i < 20; i++) {
+                gl.render(scene, camera);
+              }
+              const benchDuration = performance.now() - benchStart;
+              const avgFrameMs = benchDuration / 20;
+              console.log(
+                `[PreIntroBenchmark] 20 frames took ${benchDuration.toFixed(1)}ms (avg ${avgFrameMs.toFixed(1)}ms/frame)`
+              );
+              if (avgFrameMs > 40) {
+                console.warn(
+                  `[PreIntroBenchmark] Frame time > 40ms (${avgFrameMs.toFixed(1)}ms). Triggering automatic tier drop.`
+                );
+                onDegradeTier?.();
+              }
+
               prewarmedRef.current = true;
 
               // Hide room at scattered start poses until intro starts
@@ -332,6 +401,13 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
         stripMaterials: stripMaterialsRef.current,
         onComplete: () => {
           introCompletedRef.current = true;
+          // Freeze matrix auto-update on all static meshes for maximum runtime FPS
+          root.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              child.updateMatrix();
+              child.matrixAutoUpdate = false;
+            }
+          });
           onIntroComplete?.();
         },
         reducedMotion,
@@ -370,43 +446,36 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
     };
   }, [navState, model, camera, overviewCamera, reducedMotion, onIntroComplete, scene]);
 
-  // 3. Fast hover highlights via refs without cloning materials
-  useEffect(() => {
-    if (!model || navState === "intro") return;
+  // 4. Per-group visibility culling: groups outside frustum during section camera framing are hidden
+  const _projScreenMatrix = useRef(new THREE.Matrix4()).current;
+  const _frustum = useRef(new THREE.Frustum()).current;
 
-    model.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        const parentName = mesh.parent?.name || "";
-        const meshName = mesh.name || "";
-        const isFocused =
-          highlightedObjectName &&
-          (meshName.toLowerCase().includes(highlightedObjectName.toLowerCase()) ||
-            parentName.toLowerCase().includes(highlightedObjectName.toLowerCase()));
+  useFrame(() => {
+    if (navState !== "section" && navState !== "transitioning") {
+      groupsRef.current.forEach((grp) => {
+        if (!grp.visible) grp.visible = true;
+      });
+      return;
+    }
 
-        if (mesh.material) {
-          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          mats.forEach((mat) => {
-            if ((mat as THREE.MeshStandardMaterial).isMeshStandardMaterial) {
-              const m = mat as THREE.MeshStandardMaterial;
-              if (highlightedObjectName) {
-                if (isFocused) {
-                  m.opacity = 1.0;
-                  m.transparent = false;
-                } else {
-                  m.opacity = 0.75;
-                  m.transparent = true;
-                }
-              } else {
-                m.opacity = 1.0;
-                m.transparent = false;
-              }
-            }
-          });
+    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    _frustum.setFromProjectionMatrix(_projScreenMatrix);
+
+    const spheres = groupSpheresRef.current;
+    if (spheres && groupsRef.current.size > 0) {
+      groupsRef.current.forEach((grp, name) => {
+        // Floor and walls stay visible for room context
+        if (name === "group_floor" || name === "group_backwall") {
+          grp.visible = true;
+          return;
         }
-      }
-    });
-  }, [model, highlightedObjectName, navState]);
+        const sphere = spheres.get(name);
+        if (sphere) {
+          grp.visible = _frustum.intersectsSphere(sphere);
+        }
+      });
+    }
+  });
 
   if (!model) return null;
 

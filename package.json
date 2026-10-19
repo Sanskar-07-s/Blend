@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "optimize:models": "powershell -Command \"& 'D:\\2nd Year\\Blender\\blender.exe' 'd:\\Blender\\blender-club-3d-studio\\GamingRoom.blend' --background --python 'd:\\Blender\\blender-club-3d-studio\\export_models.py' && npx @gltf-transform/cli simplify public/models/room.glb public/models/room.mobile.glb --ratio 0.45 --error 0.005 && npx @gltf-transform/cli resize public/models/room.mobile.glb public/models/room.mobile.glb --width 512 --height 512 && npx @gltf-transform/cli webp public/models/room.mobile.glb public/models/room.mobile.glb && npx @gltf-transform/cli meshopt public/models/room.mobile.glb public/models/room.mobile.glb\"",
+    "optimize:models": "powershell -ExecutionPolicy Bypass -File scripts/optimize_models.ps1",
     "test:flow": "playwright test tests/flow.spec.ts",
     "test:measure": "playwright test tests/measure.spec.ts"
   },
