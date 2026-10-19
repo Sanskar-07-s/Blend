@@ -40,12 +40,12 @@ export const SceneLighting: React.FC<SceneLightingProps> = ({
         castShadow={false}
       />
 
-      {/* 4. Active Accent Room Flood (no shadows) */}
+      {/* 4. Active Accent Room Flood (lowered to 1.2 to prevent shelf washout) */}
       <pointLight
         position={[5.0, 3.2, 4.0]}
         color={activeAccentColor}
-        intensity={2.0}
-        distance={12}
+        intensity={1.2}
+        distance={10}
         castShadow={false}
       />
     </>

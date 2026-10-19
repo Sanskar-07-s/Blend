@@ -17,14 +17,14 @@ export const PostProcessingEffects: React.FC<PostProcessingEffectsProps> = ({
       renderPriority={1}
     >
       {/* Budget-conscious, high-performance Bloom:
-          - High luminanceThreshold so only real neons bloom
+          - High luminanceThreshold (0.88) so only true neons bloom without washing out shelf
           - MipmapBlur enabled
-          - Low intensity
+          - Controlled intensity (0.4)
       */}
       <Bloom
-        luminanceThreshold={0.7}
-        luminanceSmoothing={0.3}
-        intensity={0.45}
+        luminanceThreshold={0.88}
+        luminanceSmoothing={0.2}
+        intensity={0.4}
         mipmapBlur
       />
     </EffectComposer>

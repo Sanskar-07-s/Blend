@@ -74,7 +74,7 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           toneMappingExposure: 1.2,
           outputColorSpace: THREE.SRGBColorSpace,
         }}
-        dpr={[1, 1.5]}
+        dpr={1}
         shadows
         onCreated={({ gl }) => {
           gl.shadowMap.autoUpdate = false;
@@ -96,8 +96,12 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
         <ParticleField />
 
         <UnifiedRoomModel
+          navState={navState}
+          overviewCamera={overviewCamera}
           highlightedObjectName={highlightedObject}
           onPrewarmComplete={onPrewarmComplete}
+          onIntroComplete={() => onTransitionComplete("overview")}
+          reducedMotion={reducedMotion}
         />
 
         <Preload all />

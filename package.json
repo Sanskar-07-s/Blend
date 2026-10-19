@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "optimize:models": "& 'D:\\2nd Year\\Blender\\blender.exe' 'd:\\Blender\\blender-club-3d-studio\\GamingRoom.blend' --background --python 'd:\\Blender\\blender-club-3d-studio\\export_models.py'",
+    "optimize:models": "powershell -Command \"& 'D:\\2nd Year\\Blender\\blender.exe' 'd:\\Blender\\blender-club-3d-studio\\GamingRoom.blend' --background --python 'd:\\Blender\\blender-club-3d-studio\\export_models.py'\"",
     "test:flow": "playwright test tests/flow.spec.ts",
     "test:measure": "playwright test tests/measure.spec.ts"
   },
