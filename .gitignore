@@ -35,3 +35,6 @@ test-results/
 playwright-report/
 lighthouse-*.json
 screenshots/
+public/models/room.*.glb
+public/models/room.mobile.*.glb
+public/models/anchors.*.json

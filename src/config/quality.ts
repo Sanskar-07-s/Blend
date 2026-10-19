@@ -17,6 +17,8 @@ export interface TierSettings {
   antialias: boolean;
 }
 
+import { MODEL_MANIFEST } from "./models";
+
 export const TIER_CONFIG: Record<QualityTier, TierSettings> = {
   high: {
     tier: "high",
@@ -26,7 +28,7 @@ export const TIER_CONFIG: Record<QualityTier, TierSettings> = {
     particles: 500,
     reflectiveFloor: true,
     shadows: true,
-    modelUrl: "/models/room.glb",
+    modelUrl: MODEL_MANIFEST.room,
     introDurationMultiplier: 1.0,
     backdropBlur: true,
     antialias: true,
@@ -39,7 +41,7 @@ export const TIER_CONFIG: Record<QualityTier, TierSettings> = {
     particles: 150,
     reflectiveFloor: false,
     shadows: false,
-    modelUrl: "/models/room.glb",
+    modelUrl: MODEL_MANIFEST.room,
     introDurationMultiplier: 1.0,
     backdropBlur: true,
     antialias: false,
@@ -52,7 +54,7 @@ export const TIER_CONFIG: Record<QualityTier, TierSettings> = {
     particles: 100,
     reflectiveFloor: false,
     shadows: false,
-    modelUrl: "/models/room.mobile.glb",
+    modelUrl: MODEL_MANIFEST.roomMobile,
     introDurationMultiplier: 0.5, // 3-4 s intro
     backdropBlur: false,
     antialias: false,

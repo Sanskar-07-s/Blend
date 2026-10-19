@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "node scripts/hash_models.js && vite",
+    "build": "node scripts/hash_models.js && tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "optimize:models": "powershell -ExecutionPolicy Bypass -File scripts/optimize_models.ps1",

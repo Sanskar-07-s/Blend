@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { MODEL_MANIFEST } from "../config/models";
 import {
   SECTIONS,
   computeFramingCamera,
@@ -76,7 +77,7 @@ export function useSceneNavigation() {
 
 
   useEffect(() => {
-    fetch("/models/anchors.json")
+    fetch(MODEL_MANIFEST.anchors)
       .then((res) => res.json())
       .then((data: AnchorsData) => {
         setAnchors(data);

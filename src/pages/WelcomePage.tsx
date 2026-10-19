@@ -4,6 +4,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { detectDeviceTier, QualityTier } from "../config/quality";
 import { getActivePalette } from "../config/palette";
+import { MODEL_MANIFEST } from "../config/models";
 import { ArrowRight, Compass } from "lucide-react";
 
 // Low-poly procedural club emblem with rotating torus rings & low-poly icosahedron
@@ -143,7 +144,7 @@ export const WelcomePage: React.FC = () => {
         const link = document.createElement("link");
         link.rel = "prefetch";
         link.as = "fetch";
-        link.href = "/models/room.glb";
+        link.href = MODEL_MANIFEST.room;
         link.crossOrigin = "anonymous";
         document.head.appendChild(link);
       }, 2000);

@@ -16,11 +16,20 @@
       ]
     },
     {
-      "source": "/models/(.*)",
+      "source": "/models/(.*\\.[a-f0-9]{8}\\.(glb|json))",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/models/(room\\.glb|room\\.mobile\\.glb|anchors\\.json)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     },

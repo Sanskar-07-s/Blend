@@ -14,6 +14,7 @@ import {
   type EmissiveStripsData,
 } from "../../animations/introAnimation";
 import type { NavState } from "../../hooks/useSceneNavigation";
+import { MODEL_MANIFEST } from "../../config/models";
 
 interface UnifiedRoomModelProps {
   navState: NavState;
@@ -51,7 +52,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
   onPrewarmComplete,
   onIntroComplete,
   reducedMotion = false,
-  modelUrl = "/models/room.glb",
+  modelUrl = MODEL_MANIFEST.room,
   introDurationMultiplier = 1.0,
   onDegradeTier,
 }) => {
