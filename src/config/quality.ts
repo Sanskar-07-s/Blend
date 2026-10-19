@@ -117,6 +117,26 @@ export async function detectDeviceTier(): Promise<QualityTier> {
     return "low";
   }
 
+  // Check 1-day localStorage cache for detected GPU tier
+  const CACHE_KEY = "bc_gpu_tier_cache";
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (typeof parsed === "object" && parsed !== null && parsed.tier) {
+          if (Date.now() - (parsed.timestamp || 0) < ONE_DAY_MS) {
+            console.log(`[QualityTier] Using cached GPU tier (${parsed.tier}) from localStorage`);
+            return parsed.tier as QualityTier;
+          }
+        }
+      }
+    } catch {
+      // storage unavailable or parse error, continue
+    }
+  }
+
   // Read unmasked renderer string
   let rendererString = "UNKNOWN";
   if (typeof document !== "undefined") {
@@ -132,12 +152,23 @@ export async function detectDeviceTier(): Promise<QualityTier> {
     }
   }
 
-  let finalTier: QualityTier = "medium";
+  const isMobileDevice = (isTouch && isPhoneSize) || /android|iphone|ipad|mobile/i.test(navigator.userAgent || "");
+  const safeFallbackTier: QualityTier = isMobileDevice ? "low" : "medium";
+
+  let finalTier: QualityTier = safeFallbackTier;
   let gpuName = rendererString;
   let gpuTierNum = 1;
 
   try {
-    const gpu = await getGPUTier();
+    const gpuPromise = getGPUTier({
+      benchmarksURL: "/gpu-benchmarks",
+    });
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("detect-gpu benchmark request timed out after 1.5s")), 1500);
+    });
+
+    const gpu = await Promise.race([gpuPromise, timeoutPromise]);
     gpuName = gpu.gpu || rendererString;
     gpuTierNum = gpu.tier;
 
@@ -157,12 +188,24 @@ export async function detectDeviceTier(): Promise<QualityTier> {
       }
     }
   } catch (e) {
-    console.warn("GPU tier detection failed, using fallback metrics:", e);
-    const isIntel = /intel|uhd|iris/i.test(rendererString);
-    if (isIntel || (mem >= 4 && cores >= 4 && !isPhoneSize)) {
-      finalTier = "medium";
-    } else {
-      finalTier = "low";
+    console.warn("GPU tier detection failed or timed out (1.5s), using safe fallback tier:", safeFallbackTier, e);
+    finalTier = safeFallbackTier;
+  }
+
+  // Cache result for 1 day
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({
+          tier: finalTier,
+          gpuName,
+          gpuTierNum,
+          timestamp: Date.now(),
+        })
+      );
+    } catch {
+      // ignore storage failure
     }
   }
 

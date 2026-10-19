@@ -229,7 +229,7 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           <fog attach="fog" args={[palette.background, palette.fogNear, palette.fogFar]} />
         )}
 
-        <Environment preset="apartment" environmentIntensity={0.55} />
+        <Environment files="/environment/apartment_1k.hdr" environmentIntensity={0.55} />
 
         <SceneLighting
           navState={navState}
