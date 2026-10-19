@@ -3,30 +3,59 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>BLENDER CLUB // 3D Interactive Cyber Studio</title>
-    <meta name="description" content="Enter the interactive 3D futuristic gaming room & Blender studio for the College Blender Club." />
-    <!-- Inline SVG Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+    <title>BLENDER CLUB // 3D Interactive Studio & Community</title>
+    <meta name="description" content="Explore collegiate 3D animation, procedural geometry nodes, game art, and real-time visualization with Blender Club." />
+    <meta name="theme-color" content="#05030A" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://blender-club.vercel.app/" />
+    <meta property="og:title" content="BLENDER CLUB // 3D Interactive Studio & Community" />
+    <meta property="og:description" content="Explore collegiate 3D animation, procedural geometry nodes, game art, and real-time visualization with Blender Club." />
+    <meta property="og:image" content="https://blender-club.vercel.app/og-image.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://blender-club.vercel.app/" />
+    <meta name="twitter:title" content="BLENDER CLUB // 3D Interactive Studio & Community" />
+    <meta name="twitter:description" content="Explore collegiate 3D animation, procedural geometry nodes, game art, and real-time visualization with Blender Club." />
+    <meta name="twitter:image" content="https://blender-club.vercel.app/og-image.png" />
+
+    <!-- Icons & PWA -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href="https://blender-club.vercel.app/" />
+
     <style>
-      body {
+      html, body {
         margin: 0;
         padding: 0;
-        background-color: #05030a;
-        color: #f5f3ff;
+        background-color: #05030A;
+        color: #F5F3FF;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        overflow-x: hidden;
+      }
+      body.experience-lock {
         overflow: hidden;
         user-select: none;
         -webkit-user-select: none;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       }
       #root {
-        width: 100vw;
-        height: 100vh;
+        min-height: 100vh;
         position: relative;
-        overflow: hidden;
       }
     </style>
   </head>
   <body data-nav-state="loading" data-section="">
+    <noscript>
+      <div style="padding: 24px; text-align: center; color: #F5F3FF; background-color: #05030A; min-height: 100vh;">
+        <h1>BLENDER CLUB</h1>
+        <p>JavaScript is required to render the real-time 3D experience.</p>
+        <p><a href="/club" style="color: #A78BFA; text-decoration: underline;">Visit the 2D Club Portfolio Site</a></p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
