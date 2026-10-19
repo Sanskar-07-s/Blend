@@ -122,7 +122,7 @@ room_max_b = [10.1, 0.1, 7.0]
 section_mapping = {
     'about': {
         'sectionName': 'ABOUT THE CLUB',
-        'blenderObjectName': 'Samsung Odyssey G8 Monitor 34inch',
+        'blenderObjectName': 'Curved Studio Monitor',
         'targetMeshes': ['Generic_Monitor_Chassis', 'Screen.001', 'Stand.001'],
         'description': 'Dual Gaming Curved Display Station',
         'preferredSide': 'right'
@@ -171,9 +171,9 @@ section_mapping = {
     },
     'join': {
         'sectionName': 'JOIN THE MATRIX',
-        'blenderObjectName': 'Gamer neon  sign',
+        'blenderObjectName': 'Studio Neon Sign',
         'targetMeshes': ['Plane.046', 'Plane.047', 'Plane.048', 'Torus.001'],
-        'description': 'PlayStation PlayStation Neon Light Wall',
+        'description': 'Studio Neon Light Wall',
         'preferredSide': 'right'
     }
 }
@@ -240,15 +240,15 @@ group_root_mapping = {
     'group_ceiling': ['roof'],
     'group_desk': ['Gaming Desk With Monitor Shelf'],
     'group_pc': ['Gaming Computer Case'],
-    'group_monitors': ['Samsung Odyssey G8 Monitor 34inch', 'Dell monitor 24 inch S2421HN'],
+    'group_monitors': ['Curved Studio Monitor', 'Secondary Studio Monitor'],
     'group_chair': ['Gaming chair/chair', 'Next generation gaming chair concept'],
     'group_shelf': ['Geometric Display Shelf', 'Wooden Display Shelf', 'Cloud shelf'],
-    'group_sign': ['Gamer neon  sign'],
+    'group_sign': ['Studio Neon Sign'],
     'group_props': [
-        'Acer Nitro 7 Gaming Laptop', 'Gaming Mouse', 'Gaming Mousepad 01',
-        'Razer kraken headset gaming', 'rgb gaming keyboard ', 'rgb gaming keyboard', 'keyboard', 'keys',
+        'Gaming Laptop', 'Gaming Mouse', 'Gaming Mousepad 01',
+        'Studio Headset', 'rgb gaming keyboard ', 'rgb gaming keyboard', 'keyboard', 'keys',
         'Framed gaming art', 'Empty.011', 'Individual Book Collection 1', 'Modern Design Book Pack',
-        'Stacked set of books', 'Game Cases Pack 5', 'PS5 games', 'Xbox one games'
+        'Stacked set of books', 'Game Cases Pack 5', 'Studio Disc Cases', 'Studio Game Cases'
     ],
 }
 

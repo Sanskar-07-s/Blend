@@ -46,7 +46,7 @@ export const SECTIONS: SectionItem[] = [
     title: "About the club",
     subtitle: "Overview",
     objectId: "monitor",
-    objectName: "Samsung Odyssey G8 Monitor 34inch",
+    objectName: "Curved Studio Monitor",
     tagline: "Student 3D studio and digital art collective.",
     description:
       "About the club. Add two or three sentences here about who you are, what you make, and why students join.",
@@ -249,7 +249,7 @@ export const SECTIONS: SectionItem[] = [
     title: "Join the club",
     subtitle: "Get involved",
     objectId: "neon_sign",
-    objectName: "Gamer neon  sign",
+    objectName: "Studio Neon Sign",
     tagline: "Open to all enrolled students with any experience level.",
     description:
       "Membership information. Add two or three sentences here explaining how students can sign up and attend their first meeting.",

@@ -34,7 +34,7 @@
   "sections": {
     "about": {
       "exists": true,
-      "blenderObjectName": "Samsung Odyssey G8 Monitor 34inch",
+      "blenderObjectName": "Curved Studio Monitor",
       "sectionName": "ABOUT THE CLUB",
       "description": "Dual Gaming Curved Display Station",
       "preferredSide": "right",
@@ -349,9 +349,9 @@
     },
     "join": {
       "exists": true,
-      "blenderObjectName": "Gamer neon  sign",
+      "blenderObjectName": "Studio Neon Sign",
       "sectionName": "JOIN THE MATRIX",
-      "description": "PlayStation PlayStation Neon Light Wall",
+      "description": "Studio Neon Light Wall",
       "preferredSide": "right",
       "bbox": {
         "blender_min": [

@@ -12,7 +12,7 @@ const SECTIONS = [
   { id: "gallery", targetName: "frame" },
   { id: "team", targetName: "Cube029" },
   { id: "community", targetName: "Cube022" },
-  { id: "join", targetName: "Gamer_neon__sign" },
+  { id: "join", targetName: "Studio_Neon_Sign" },
 ];
 
 const outDir = path.join(process.cwd(), "screenshots", "framing");
@@ -79,11 +79,12 @@ test.describe("Section Framing Verification (30% to 85% Height & Width Fit)", ()
                   if (obj.name.includes("Cube029") || obj.name.includes("Cube.029")) meshes.push(obj);
                 } else if (targetName === "Cube022") {
                   if (obj.name.includes("Cube022") || obj.name.includes("Cube.022")) meshes.push(obj);
-                } else if (targetName === "Gamer_neon__sign") {
+                } else if (targetName === "Studio_Neon_Sign" || targetName === "Gamer_neon__sign") {
                   if (
                     obj.name.includes("Plane04") ||
                     obj.name.includes("Plane.04") ||
                     obj.name.includes("Torus") ||
+                    obj.name.includes("Studio_Neon") ||
                     obj.name.includes("Gamer")
                   )
                     meshes.push(obj);

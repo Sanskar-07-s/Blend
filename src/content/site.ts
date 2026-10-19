@@ -425,7 +425,7 @@ export const SITE_CONTENT: SiteContent = {
       },
       {
         id: "gal-6",
-        title: "Studio PlayStation Neon Emissive Array",
+        title: "Studio Neon Emissive Array",
         author: "Studio Render",
         category: "VFX",
         src: "/test-results/tier_screenshots/high_sec8_join.png",

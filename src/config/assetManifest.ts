@@ -17,7 +17,7 @@ export const ASSET_MANIFEST: Record<string, AssetConfig> = {
   },
   monitor: {
     id: "monitor",
-    name: "Dual Gaming Displays (Samsung Odyssey 34\" + Dell 24\")",
+    name: "Dual Studio Displays (Curved 34\" + Secondary 24\")",
     glbPath: "/models/monitor.glb",
     enabled: true,
   },
