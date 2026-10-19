@@ -26,7 +26,16 @@ export const ClubPage: React.FC = () => {
   const [selectedGalleryItem, setSelectedGalleryItem] = useState<GalleryItem | null>(null);
   const [eventTab, setEventTab] = useState<"upcoming" | "past">("upcoming");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-  const [entryFade, setEntryFade] = useState(true);
+  const [entryFade, setEntryFade] = useState(() => {
+    if (typeof window !== "undefined") {
+      const fromStudio = sessionStorage.getItem("bc_exiting_to_club");
+      if (fromStudio) {
+        sessionStorage.removeItem("bc_exiting_to_club");
+        return true;
+      }
+    }
+    return false;
+  });
 
   // Set document title & meta tags
   useEffect(() => {
@@ -39,13 +48,14 @@ export const ClubPage: React.FC = () => {
     // Ensure body is not locked for scrolling
     document.body.classList.remove("experience-lock");
 
-    // Smooth entry fade from violet
-    const timer = setTimeout(() => {
-      setEntryFade(false);
-    }, 600);
-
-    return () => clearTimeout(timer);
-  }, []);
+    // Smooth entry fade when coming from studio exit
+    if (entryFade) {
+      const timer = setTimeout(() => {
+        setEntryFade(false);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [entryFade]);
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex((prev) => (prev === index ? null : index));

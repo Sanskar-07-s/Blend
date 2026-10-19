@@ -57,9 +57,19 @@ canvas {
   -webkit-touch-callout: none;
 }
 
+/* Metric-matched fallback to eliminate CLS and enable instant h1 paint */
+@font-face {
+  font-family: 'Bricolage Grotesque Fallback';
+  src: local('Arial'), local('Helvetica');
+  ascent-override: 95%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+  size-adjust: 102%;
+}
+
 /* Typography Hierarchy */
 h1, h2, h3, h4, h5, h6, .heading-font {
-  font-family: 'Bricolage Grotesque', sans-serif;
+  font-family: 'Bricolage Grotesque', 'Bricolage Grotesque Fallback', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.015em;

@@ -59,10 +59,24 @@ function seoPlugin(siteUrl: string): Plugin {
     closeBundle() {
       generateSeoFiles(path.resolve(__dirname, 'dist'))
     },
-    transformIndexHtml(html) {
-      return html
-        .replaceAll('https://blender-club.vercel.app', siteUrl)
-        .replaceAll('https://blend-gamma-two.vercel.app', siteUrl)
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        let transformed = html
+          .replaceAll('https://blender-club.vercel.app', siteUrl)
+          .replaceAll('https://blend-gamma-two.vercel.app', siteUrl)
+
+        if (ctx?.bundle) {
+          const fontAsset = Object.keys(ctx.bundle).find(
+            name => name.includes('bricolage-grotesque-latin-600') && name.endsWith('.woff2')
+          )
+          if (fontAsset) {
+            const preloadTag = `    <link rel="preload" href="/${fontAsset}" as="font" type="font/woff2" crossorigin />\n`
+            transformed = transformed.replace('</head>', `${preloadTag}  </head>`)
+          }
+        }
+        return transformed
+      }
     }
   }
 }
@@ -76,6 +90,18 @@ export default defineConfig(({ mode }) => {
     plugins: [modelHashingPlugin(), seoPlugin(siteUrl), react()],
     build: {
       chunkSizeWarningLimit: 600,
+      modulePreload: {
+        resolveDependencies(_filename, deps, { hostType }) {
+          if (hostType === 'html') {
+            return deps.filter(
+              dep => !dep.includes('three') &&
+                     !dep.includes('react-three') &&
+                     !dep.includes('gsap')
+            )
+          }
+          return deps
+        }
+      },
       rollupOptions: {
         output: {
           manualChunks: {
