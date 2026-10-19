@@ -56,9 +56,10 @@ export const SECTIONS: SectionItem[] = [
     preferredSide: "right",
     isPlaceholder: true,
     override: {
-      azimuthDeg: 25,
-      elevationDeg: 14,
-      distanceMultiplier: 1.35,
+      azimuthDeg: 12,
+      elevationDeg: 6,
+      distanceMultiplier: 0.98,
+      preferredSide: "right",
     },
     cameraPosition: [6.14, 2.7, 2.5],
     cameraTarget: [6.14, 2.4, 0.32],
@@ -86,7 +87,8 @@ export const SECTIONS: SectionItem[] = [
     override: {
       azimuthDeg: -22,
       elevationDeg: 12,
-      distanceMultiplier: 1.3,
+      distanceMultiplier: 1.0,
+      preferredSide: "left",
     },
     cameraPosition: [6.5, 2.4, 2.8],
     cameraTarget: [7.23, 2.04, 1.23],
@@ -112,9 +114,10 @@ export const SECTIONS: SectionItem[] = [
     preferredSide: "left",
     isPlaceholder: true,
     override: {
-      azimuthDeg: -30,
-      elevationDeg: 10,
-      distanceMultiplier: 1.2,
+      azimuthDeg: -26,
+      elevationDeg: -2,
+      distanceMultiplier: 1.35,
+      preferredSide: "left",
     },
     cameraPosition: [8.2, 4.2, 5.8],
     cameraTarget: [10.0, 4.71, 3.61],
@@ -140,9 +143,10 @@ export const SECTIONS: SectionItem[] = [
     preferredSide: "right",
     isPlaceholder: true,
     override: {
-      azimuthDeg: 28,
-      elevationDeg: 12,
-      distanceMultiplier: 1.25,
+      azimuthDeg: 26,
+      elevationDeg: 2,
+      distanceMultiplier: 1.05,
+      preferredSide: "right",
     },
     cameraPosition: [2.5, 3.2, 6.2],
     cameraTarget: [0.48, 2.83, 4.64],
@@ -168,9 +172,10 @@ export const SECTIONS: SectionItem[] = [
     preferredSide: "right",
     isPlaceholder: true,
     override: {
-      azimuthDeg: 24,
+      azimuthDeg: 22,
       elevationDeg: 8,
-      distanceMultiplier: 1.3,
+      distanceMultiplier: 1.0,
+      preferredSide: "right",
     },
     cameraPosition: [2.8, 5.1, 8.8],
     cameraTarget: [0.01, 5.39, 7.95],
@@ -196,9 +201,10 @@ export const SECTIONS: SectionItem[] = [
     preferredSide: "right",
     isPlaceholder: true,
     override: {
-      azimuthDeg: 25,
-      elevationDeg: 16,
-      distanceMultiplier: 1.3,
+      azimuthDeg: 24,
+      elevationDeg: 14,
+      distanceMultiplier: 1.0,
+      preferredSide: "right",
     },
     cameraPosition: [6.8, 2.4, 5.0],
     cameraTarget: [5.3, 1.46, 3.05],
@@ -224,9 +230,10 @@ export const SECTIONS: SectionItem[] = [
     preferredSide: "left",
     isPlaceholder: true,
     override: {
-      azimuthDeg: -25,
-      elevationDeg: 14,
-      distanceMultiplier: 1.25,
+      azimuthDeg: -26,
+      elevationDeg: 12,
+      distanceMultiplier: 2.15,
+      preferredSide: "left",
     },
     cameraPosition: [6.5, 2.8, 8.2],
     cameraTarget: [8.3, 1.86, 6.44],
@@ -252,9 +259,10 @@ export const SECTIONS: SectionItem[] = [
     preferredSide: "right",
     isPlaceholder: true,
     override: {
-      azimuthDeg: 26,
-      elevationDeg: 10,
-      distanceMultiplier: 1.3,
+      azimuthDeg: 24,
+      elevationDeg: 2,
+      distanceMultiplier: 1.05,
+      preferredSide: "right",
     },
     cameraPosition: [3.2, 3.6, 2.4],
     cameraTarget: [1.88, 3.43, 0.16],
@@ -284,23 +292,28 @@ export function computeFramingCamera(
   // Horizontal FOV = 2 * atan(tan(vfov / 2) * aspect)
   const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * effectiveAspect);
 
-  // Compute required distance for vertical fit
-  const dimV = Math.max(size[1], size[2] * 0.65);
-  const distV = dimV / (2 * Math.tan(vFovRad / 2));
+  // Focused object fills 30 to 85 percent of screen height (tall objects fit ~72-78%)
+  const isTall = size[1] > 3.0;
+  const targetHeightFraction = isPortrait
+    ? (isTall ? 0.72 : 0.48)
+    : (isTall ? 0.78 : 0.52);
 
-  // Compute required distance for horizontal fit
-  const dimH = Math.max(size[0], size[2] * 0.65);
-  const distH = dimH / (2 * Math.tan(hFovRad / 2));
+  const targetWidthFraction = isPortrait ? 0.94 : 0.48;
 
-  // Take the larger distance so object fits both vertically and horizontally
-  const baseDistance = Math.max(distV, distH) * 1.35;
-  const dist = baseDistance * (override?.distanceMultiplier ?? 1.25);
+  const dimV = Math.max(size[1], size[2] * 0.35);
+  const dimH = Math.max(size[0], size[2] * 0.35);
+
+  const distV = dimV / (2 * Math.tan(vFovRad / 2) * targetHeightFraction);
+  const distH = dimH / (2 * Math.tan(hFovRad / 2) * targetWidthFraction);
+
+  const baseDistance = Math.max(distV, distH);
+  const dist = baseDistance * (override?.distanceMultiplier ?? 1.0);
 
   // Azimuth & Elevation angles
-  const azimuthRad = ((override?.azimuthDeg ?? 25) * Math.PI) / 180;
-  const elevationRad = ((override?.elevationDeg ?? 12) * Math.PI) / 180;
+  const azimuthRad = ((override?.azimuthDeg ?? 24) * Math.PI) / 180;
+  const elevationRad = ((override?.elevationDeg ?? 10) * Math.PI) / 180;
 
-  // Camera direction from open side of room
+  // Camera direction from target to camera:
   const dx = dist * Math.sin(azimuthRad) * Math.cos(elevationRad);
   const dy = dist * Math.sin(elevationRad);
   const dz = dist * Math.cos(azimuthRad) * Math.cos(elevationRad);
@@ -313,17 +326,13 @@ export function computeFramingCamera(
   ];
 
   if (isPortrait) {
-    // Portrait: Shift target downward so the focused object sits in the upper 55% of the viewport
-    target[1] -= dist * 0.22;
+    const frustumHalfHeight = dist * Math.tan(vFovRad / 2);
+    target[1] -= frustumHalfHeight * 0.12;
   } else {
-    // Landscape/Desktop: Shift object left/right to leave room for the side content panel
     const side = override?.preferredSide ?? "right";
-    const sideShift = dist * 0.16;
-    if (side === "left") {
-      target[0] -= sideShift;
-    } else {
-      target[0] += sideShift;
-    }
+    const frustumHalfWidth = dist * Math.tan(hFovRad / 2);
+    const sideSign = side === "right" ? 1 : -1;
+    target[0] += sideSign * frustumHalfWidth * 0.20;
   }
 
   const position: [number, number, number] = [

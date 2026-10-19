@@ -85,9 +85,12 @@ for img in bpy.data.images:
 def blend_to_gltf(vec):
     return [round(vec[0], 3), round(vec[2], 3), round(-vec[1], 3)]
 
-def get_obj_world_bbox(obj):
-    objs = [obj] if obj.type == 'MESH' else []
-    objs.extend([c for c in obj.children_recursive if c.type == 'MESH'])
+def get_obj_world_bbox(obj, target_meshes=None):
+    if target_meshes:
+        objs = [bpy.data.objects.get(m) for m in target_meshes if bpy.data.objects.get(m) is not None]
+    else:
+        objs = [obj] if obj.type == 'MESH' else []
+        objs.extend([c for c in obj.children_recursive if c.type == 'MESH'])
     all_vs = []
     for o in objs:
         all_vs.extend([o.matrix_world @ v.co for v in o.data.vertices])
@@ -120,48 +123,56 @@ section_mapping = {
     'about': {
         'sectionName': 'ABOUT THE CLUB',
         'blenderObjectName': 'Samsung Odyssey G8 Monitor 34inch',
+        'targetMeshes': ['Generic_Monitor_Chassis', 'Screen.001', 'Stand.001'],
         'description': 'Dual Gaming Curved Display Station',
         'preferredSide': 'right'
     },
     'projects': {
         'sectionName': 'PROJECTS & SHOWCASE',
         'blenderObjectName': 'Gaming Computer Case',
+        'targetMeshes': ['case', 'case.001', 'case.inside'],
         'description': 'Custom Liquid-Cooled RGB Rig',
         'preferredSide': 'left'
     },
     'events': {
         'sectionName': 'EVENTS & WORKSHOPS',
         'blenderObjectName': 'Cloud shelf',
+        'targetMeshes': ['Cloud shelf'],
         'description': 'Floating Cloud LED Shelf & Game Collection',
         'preferredSide': 'left'
     },
     'learning': {
         'sectionName': 'LEARNING & MENTORSHIP',
         'blenderObjectName': 'Geometric Display Shelf',
+        'targetMeshes': ['Bookscase Black and Light'],
         'description': 'Modular Bookcase with 3D Design Library',
         'preferredSide': 'right'
     },
     'gallery': {
         'sectionName': 'COMMUNITY ART GALLERY',
         'blenderObjectName': 'Framed gaming art',
+        'targetMeshes': ['frame', 'painting'],
         'description': 'Framed Wall Art Showcase',
         'preferredSide': 'right'
     },
     'team': {
         'sectionName': 'LEADERSHIP & CREATORS',
         'blenderObjectName': 'Gaming chair/chair',
+        'targetMeshes': ['Cube.029'],
         'description': 'Ergonomic Creator Cockpit Chair',
         'preferredSide': 'right'
     },
     'community': {
         'sectionName': 'STUDIO COMMUNITY',
         'blenderObjectName': 'Next generation gaming chair concept',
+        'targetMeshes': ['Cube.022'],
         'description': 'Cyber Lounge Pod & Battle Station',
         'preferredSide': 'left'
     },
     'join': {
         'sectionName': 'JOIN THE MATRIX',
         'blenderObjectName': 'Gamer neon  sign',
+        'targetMeshes': ['Plane.046', 'Plane.047', 'Plane.048', 'Torus.001'],
         'description': 'PlayStation PlayStation Neon Light Wall',
         'preferredSide': 'right'
     }
@@ -192,7 +203,7 @@ for sec_id, info in section_mapping.items():
         }
         continue
 
-    bbox = get_obj_world_bbox(obj)
+    bbox = get_obj_world_bbox(obj, info.get('targetMeshes'))
     if not bbox:
         print(f"WARNING: No mesh geometry for '{obj_name}'!")
         continue
