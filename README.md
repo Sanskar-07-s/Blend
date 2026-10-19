@@ -129,11 +129,15 @@ Add the following environment variables in the Vercel dashboard under **Project 
 | Variable | Description | Example Value |
 |---|---|---|
 | `VITE_JOIN_URL` | Application Form Link (Tally, Google Forms) | `https://tally.so/r/your-form` |
-| `VITE_SITE_URL` | Production canonical URL | `https://blenderclub.vercel.app` |
+| `VITE_SITE_URL` | Production canonical URL used at build time for sitemap, robots.txt, canonical & OpenGraph tags (defaults to `https://blend-gamma-two.vercel.app`) | `https://blend-gamma-two.vercel.app` |
 | `VITE_CONTACT_EMAIL` | Contact inquiries email | `contact@blenderclub.org` |
 | `VITE_ANALYTICS` | Enable Vercel Web Analytics (optional) | `1` |
 
 *(Refer to [`.env.example`](file:///d:/Blender/blender-club-3d-studio/.env.example) for reference)*
+
+> **Note on SEO Generation**:
+> `robots.txt` and `sitemap.xml` are dynamically generated at build time using the value of `VITE_SITE_URL` (defaulting to the deployed URL `https://blend-gamma-two.vercel.app`). Canonical and OpenGraph tags in `index.html` are also updated automatically at build time.
+
 
 ### 4. Deploy
 Click **Deploy**. Vercel will compile the TypeScript application, optimize the bundle, and publish the site with global CDN caching.

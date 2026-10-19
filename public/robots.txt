@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://blender-club.vercel.app/sitemap.xml
+Sitemap: https://blend-gamma-two.vercel.app/sitemap.xml
