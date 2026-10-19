@@ -2,7 +2,7 @@ import { test, expect, Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 
-test.setTimeout(90000);
+test.setTimeout(180000);
 
 interface DeviceConfig {
   name: string;
@@ -139,7 +139,7 @@ test.describe("Device Emulation Matrix", () => {
 
       // 3. Wait for prewarm & ready to enter
       const enterBtn = page.locator("button:has-text('ENTER')");
-      await enterBtn.waitFor({ state: "visible", timeout: 25000 });
+      await enterBtn.waitFor({ state: "visible", timeout: 60000 });
       const loadTime = Math.round(performance.now() - startTime);
 
       // Check detected tier before entering

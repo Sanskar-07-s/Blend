@@ -59,6 +59,9 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
   const prewarmedRef = useRef(false);
   const groupsRef = useRef<Map<string, THREE.Object3D>>(new Map());
   const restTransformsRef = useRef<Map<string, GroupRestTransform>>(new Map());
+  const hasCapturedRestRef = useRef(false);
+  const hasIntroPlayedRef = useRef(false);
+  const introCompletedRef = useRef(false);
   const groupMaterialsRef = useRef<Map<string, THREE.MeshStandardMaterial[]>>(new Map());
   const stripMaterialsRef = useRef<EmissiveStripsData>({
     ceiling: [],
@@ -97,19 +100,31 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
           shelf: [],
         };
 
-        // Cache group parent nodes
-        ASSEMBLY_GROUP_NAMES.forEach((name) => {
-          const groupNode = root.getObjectByName(name);
-          if (groupNode) {
-            groups.set(name, groupNode);
-            restTransforms.set(name, {
-              position: groupNode.position.clone(),
-              rotation: groupNode.rotation.clone(),
-              scale: groupNode.scale.clone(),
-            });
-            groupMaterials.set(name, []);
-          }
-        });
+        // Cache group parent nodes and capture rest poses ONCE after load, before scattered pose is applied
+        if (!hasCapturedRestRef.current) {
+          ASSEMBLY_GROUP_NAMES.forEach((name) => {
+            const groupNode = root.getObjectByName(name);
+            if (groupNode) {
+              groups.set(name, groupNode);
+              restTransforms.set(name, {
+                position: groupNode.position.clone(),
+                rotation: groupNode.rotation.clone(),
+                scale: groupNode.scale.clone(),
+              });
+              groupMaterials.set(name, []);
+            }
+          });
+          restTransformsRef.current = restTransforms;
+          hasCapturedRestRef.current = true;
+        } else {
+          ASSEMBLY_GROUP_NAMES.forEach((name) => {
+            const groupNode = root.getObjectByName(name);
+            if (groupNode) {
+              groups.set(name, groupNode);
+              groupMaterials.set(name, []);
+            }
+          });
+        }
 
         // Traverse meshes and collect materials
         let totalTriangles = 0;
@@ -265,11 +280,38 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
     };
   }, [gl, scene, camera, modelUrl, onModelLoaded, onPrewarmComplete]);
 
-  // 2. Assembly intro timeline trigger
+  // Expose snapshot helper on window.__bc for zero-delta Playwright assertions
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).__bc = (window as any).__bc || {};
+      (window as any).__bc.getSceneSnapshot = () => ({
+        camera: {
+          x: Number(camera.position.x.toFixed(4)),
+          y: Number(camera.position.y.toFixed(4)),
+          z: Number(camera.position.z.toFixed(4)),
+        },
+        groups: Array.from(groupsRef.current.entries()).map(([name, grp]) => ({
+          name,
+          x: Number(grp.position.x.toFixed(4)),
+          y: Number(grp.position.y.toFixed(4)),
+          z: Number(grp.position.z.toFixed(4)),
+          rx: Number(grp.rotation.x.toFixed(4)),
+          ry: Number(grp.rotation.y.toFixed(4)),
+          rz: Number(grp.rotation.z.toFixed(4)),
+        })),
+      });
+    }
+  }, [camera]);
+
+  // 2. Assembly intro timeline trigger: runs exactly ONCE
   useEffect(() => {
     if (!model || groupsRef.current.size === 0) return;
 
     if (navState === "intro") {
+      // Never restart intro on resize or quality tier updates
+      if (hasIntroPlayedRef.current) return;
+      hasIntroPlayedRef.current = true;
+
       // Kill previous timeline if any
       if (masterTimelineRef.current) {
         masterTimelineRef.current.kill();
@@ -289,6 +331,7 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
         groupMaterials: groupMaterialsRef.current,
         stripMaterials: stripMaterialsRef.current,
         onComplete: () => {
+          introCompletedRef.current = true;
           onIntroComplete?.();
         },
         reducedMotion,
@@ -297,21 +340,27 @@ export const UnifiedRoomModel: React.FC<UnifiedRoomModelProps> = ({
 
       masterTimelineRef.current = tl;
     } else if (navState === "overview" || navState === "section") {
-      // If intro was playing and skipped, or already finished, guarantee all groups at rest
-      if (masterTimelineRef.current) {
-        masterTimelineRef.current.kill();
-        masterTimelineRef.current = null;
-      }
+      // If intro finished normally, createAssemblyTimeline has already locked all groups
+      // to rest and camera to overview. Do NOT re-snap or move camera again!
+      if (!introCompletedRef.current) {
+        introCompletedRef.current = true;
+        hasIntroPlayedRef.current = true;
 
-      const accentLight = scene.getObjectByProperty("type", "PointLight") as THREE.PointLight | undefined;
-      snapToRestPose({
-        groups: groupsRef.current,
-        restTransforms: restTransformsRef.current,
-        camera: navState === "overview" ? camera : undefined,
-        overviewCam: navState === "overview" ? overviewCamera : undefined,
-        accentLightRef: accentLight,
-        stripMaterials: stripMaterialsRef.current,
-      });
+        if (masterTimelineRef.current) {
+          masterTimelineRef.current.kill();
+          masterTimelineRef.current = null;
+        }
+
+        const accentLight = scene.getObjectByProperty("type", "PointLight") as THREE.PointLight | undefined;
+        snapToRestPose({
+          groups: groupsRef.current,
+          restTransforms: restTransformsRef.current,
+          camera: undefined, // Never touch camera here; CameraController is responsible for camera
+          overviewCam: undefined,
+          accentLightRef: accentLight,
+          stripMaterials: stripMaterialsRef.current,
+        });
+      }
     }
 
     return () => {

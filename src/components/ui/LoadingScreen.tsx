@@ -79,40 +79,42 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
           style={{
             width: "220px",
             height: "2px",
-            background: "rgba(139, 92, 246, 0.2)",
+            background: "rgba(124, 58, 237, 0.2)",
             borderRadius: "1px",
             overflow: "hidden",
           }}
         >
           <div
             style={{
-              width: `${isReadyToEnter ? 100 : progress}%`,
+              width: `${isReadyToEnter ? 100 : Math.min(progress, 90)}%`,
               height: "100%",
-              background: "linear-gradient(90deg, #8b5cf6, #c084fc)",
-              boxShadow: "0 0 10px #c084fc",
+              background: "linear-gradient(90deg, #7C3AED, #A78BFA)",
+              boxShadow: "0 0 10px #A78BFA",
               transition: "width 0.15s ease",
             }}
           />
         </div>
 
-        {/* ENTER Button */}
-        {(isReadyToEnter || progress >= 100) && (
+        {/* ENTER Button: Only enabled when quality tier is final and prewarming complete */}
+        {isReadyToEnter && (
           <button
+            id="enter-studio-btn"
+            data-testid="enter-button"
             onClick={onEnter}
             aria-label="Enter Studio"
             style={{
               marginTop: "8px",
               background: "transparent",
-              border: "1px solid #8b5cf6",
+              border: "1px solid rgba(124, 58, 237, 0.5)",
               borderRadius: "6px",
-              color: "#f5f3ff",
+              color: "#F5F3FF",
               padding: "10px 24px",
               fontSize: "13px",
               fontFamily: "Orbitron, sans-serif",
               fontWeight: 700,
               letterSpacing: "0.1em",
               cursor: "pointer",
-              boxShadow: "0 0 20px rgba(139, 92, 246, 0.4)",
+              boxShadow: "0 0 20px rgba(124, 58, 237, 0.35)",
               transition: "all 0.25s ease",
             }}
             onMouseEnter={(e) => {

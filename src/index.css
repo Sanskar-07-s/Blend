@@ -1,11 +1,13 @@
 :root {
-  --bg-primary: #05030a;
-  --primary: #8b5cf6;
-  --accent: #c084fc;
-  --text-main: #f5f3ff;
-  --text-muted: #a1a1b5;
-  --panel-bg: rgba(15, 10, 30, 0.75);
-  --panel-border: rgba(139, 92, 246, 0.35);
+  --bg-primary: #05030A;
+  --primary: #7C3AED;
+  --accent: #A78BFA;
+  --accent-magenta: #D946EF;
+  --accent-cyan: #22D3EE;
+  --text-main: #F5F3FF;
+  --text-muted: #A8A3C7;
+  --panel-bg: rgba(20, 16, 42, 0.85);
+  --panel-border: rgba(124, 58, 237, 0.4);
 }
 
 * {

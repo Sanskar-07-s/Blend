@@ -50,8 +50,8 @@ export const SECTIONS: SectionItem[] = [
     description:
       "We are a collegiate community of 3D artists, animators, and VFX creators. From geometry nodes to cinematic lighting, we build worlds using Blender.",
     badge: "01 / MATRIX",
-    accentColor: "#8b5cf6",
-    accentGlow: "rgba(139, 92, 246, 0.4)",
+    accentColor: "#7C3AED",
+    accentGlow: "rgba(124, 58, 237, 0.4)",
     preferredSide: "right",
     override: {
       azimuthDeg: 25,
@@ -77,8 +77,8 @@ export const SECTIONS: SectionItem[] = [
     description:
       "Our lab builds custom render nodes and real-time interactive experiences using Unreal Engine and Blender Cycles GPU acceleration.",
     badge: "02 / HARDWARE",
-    accentColor: "#c084fc",
-    accentGlow: "rgba(192, 132, 252, 0.4)",
+    accentColor: "#A78BFA",
+    accentGlow: "rgba(167, 139, 250, 0.4)",
     preferredSide: "left",
     override: {
       azimuthDeg: -22,
@@ -104,8 +104,8 @@ export const SECTIONS: SectionItem[] = [
     description:
       "Join our bi-weekly speed sculpts and weekend film challenges. Collaborate with peer creators across campus to build game-ready worlds.",
     badge: "03 / SCHEDULE",
-    accentColor: "#38bdf8",
-    accentGlow: "rgba(56, 189, 248, 0.4)",
+    accentColor: "#22D3EE",
+    accentGlow: "rgba(34, 211, 238, 0.4)",
     preferredSide: "left",
     override: {
       azimuthDeg: -30,
@@ -131,8 +131,8 @@ export const SECTIONS: SectionItem[] = [
     description:
       "Comprehensive roadmaps covering hard-surface modeling, sculpting, texture painting, topology optimization, and Python scripting.",
     badge: "04 / ACADEMY",
-    accentColor: "#06b6d4",
-    accentGlow: "rgba(6, 182, 212, 0.4)",
+    accentColor: "#A78BFA",
+    accentGlow: "rgba(167, 139, 250, 0.4)",
     preferredSide: "right",
     override: {
       azimuthDeg: 28,
@@ -158,8 +158,8 @@ export const SECTIONS: SectionItem[] = [
     description:
       "Explore curated portfolio pieces showcased in student exhibitions, digital art festivals, and college design competitions.",
     badge: "05 / ARCHIVE",
-    accentColor: "#ec4899",
-    accentGlow: "rgba(236, 72, 153, 0.4)",
+    accentColor: "#D946EF",
+    accentGlow: "rgba(217, 70, 239, 0.4)",
     preferredSide: "right",
     override: {
       azimuthDeg: 24,
@@ -185,8 +185,8 @@ export const SECTIONS: SectionItem[] = [
     description:
       "Our team coordinates workshops, manages render hardware, and organizes collaboration pipelines for interdisciplinary student films.",
     badge: "06 / SQUAD",
-    accentColor: "#a855f7",
-    accentGlow: "rgba(168, 85, 247, 0.4)",
+    accentColor: "#7C3AED",
+    accentGlow: "rgba(124, 58, 237, 0.4)",
     preferredSide: "right",
     override: {
       azimuthDeg: 25,
@@ -212,8 +212,8 @@ export const SECTIONS: SectionItem[] = [
     description:
       "Connect with 150+ members on Discord for daily critiques, asset drops, study streams, and game development game nights.",
     badge: "07 / NETWORK",
-    accentColor: "#f59e0b",
-    accentGlow: "rgba(245, 158, 11, 0.4)",
+    accentColor: "#22D3EE",
+    accentGlow: "rgba(34, 211, 238, 0.4)",
     preferredSide: "left",
     override: {
       azimuthDeg: -25,
@@ -239,8 +239,8 @@ export const SECTIONS: SectionItem[] = [
     description:
       "Get instant access to our asset repository, Discord channels, workshop schedules, and lab workstations.",
     badge: "08 / ENLIST",
-    accentColor: "#10b981",
-    accentGlow: "rgba(16, 185, 129, 0.4)",
+    accentColor: "#D946EF",
+    accentGlow: "rgba(217, 70, 239, 0.4)",
     preferredSide: "right",
     override: {
       azimuthDeg: 26,

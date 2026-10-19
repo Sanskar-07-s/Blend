@@ -33,7 +33,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   onTransitionComplete,
   reducedMotion = false,
 }) => {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   const currentTimeline = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
@@ -41,13 +41,19 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       if (navState !== "section" && navState !== "overview") return;
       _mouseTarget.x = (e.clientX / window.innerWidth - 0.5) * 2;
       _mouseTarget.y = (e.clientY / window.innerHeight - 0.5) * 2;
+      invalidate();
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [navState]);
+  }, [navState, invalidate]);
+
+  const prevNavStateRef = useRef<NavState>(navState);
 
   useEffect(() => {
+    const prevNavState = prevNavStateRef.current;
+    prevNavStateRef.current = navState;
+
     if (navState === "loading" || navState === "intro") return;
 
     const isGoingToOverview = navState === "overview" || isGoingOverview;
@@ -57,6 +63,16 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     if (currentTimeline.current) {
       currentTimeline.current.kill();
       currentTimeline.current = null;
+    }
+
+    // Crucial: exactly ONE intro timeline ends directly at the computed overview pose.
+    // Transitioning from "intro" to "overview" must NOT launch a second tween or camera motion.
+    if (prevNavState === "intro" && navState === "overview") {
+      camera.position.set(...targetPos);
+      _currentLookAt.set(...targetLook);
+      camera.lookAt(_currentLookAt);
+      onTransitionComplete("overview");
+      return;
     }
 
     if (reducedMotion) {

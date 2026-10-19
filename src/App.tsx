@@ -23,6 +23,7 @@ const ClubRoomScene = lazy(() => import("./scenes/ClubRoomScene"));
 export function App() {
   const [hasEntered, setHasEntered] = useState(false);
   const [isPrewarmed, setIsPrewarmed] = useState(false);
+  const [isTierReady, setIsTierReady] = useState(false);
   const [webGlSupported] = useState(() => isWebGLAvailable());
 
   // Quality Tier State
@@ -65,6 +66,7 @@ export function App() {
     detectDeviceTier().then((detectedTier) => {
       if (!active) return;
       setTier(detectedTier);
+      setIsTierReady(true);
       const config = TIER_CONFIG[detectedTier];
       injectModelPreload(config.modelUrl);
 
@@ -272,7 +274,7 @@ export function App() {
       )}
 
       {!hasEntered && (
-        <LoadingScreen onEnter={handleEnter} isReadyToEnter={isPrewarmed} />
+        <LoadingScreen onEnter={handleEnter} isReadyToEnter={isPrewarmed && isTierReady} />
       )}
 
       {hasEntered && (

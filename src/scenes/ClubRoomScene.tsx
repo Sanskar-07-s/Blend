@@ -1,7 +1,8 @@
-import React, { useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import React, { useRef, useEffect } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, AdaptiveDpr, PerformanceMonitor, Preload } from "@react-three/drei";
 import * as THREE from "three";
+import gsap from "gsap";
 import { UnifiedRoomModel } from "../components/3d/UnifiedRoomModel";
 import { SceneLighting } from "../components/3d/SceneLighting";
 import { ParticleField } from "../components/3d/ParticleField";
@@ -86,6 +87,23 @@ function RenderMetricsCollector({
   return null;
 }
 
+function MasterClockSync() {
+  const { invalidate } = useThree();
+
+  useEffect(() => {
+    gsap.ticker.lagSmoothing(0);
+    const tick = () => {
+      invalidate();
+    };
+    gsap.ticker.add(tick);
+    return () => {
+      gsap.ticker.remove(tick);
+    };
+  }, [invalidate]);
+
+  return null;
+}
+
 export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
   navState,
   isGoingOverview = false,
@@ -102,6 +120,7 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
   isPaused = false,
 }) => {
   const config = TIER_CONFIG[tier] || TIER_CONFIG.high;
+  const isIdle = (navState === "overview" || navState === "section") && !isGoingOverview;
 
   return (
     <div style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}>
@@ -116,12 +135,12 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           antialias: config.antialias,
           powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.2,
+          toneMappingExposure: 0.95,
           outputColorSpace: THREE.SRGBColorSpace,
         }}
         dpr={config.dpr}
         shadows={config.shadows}
-        frameloop={isPaused ? "never" : "always"}
+        frameloop={isPaused ? "never" : isIdle ? "demand" : "always"}
         onCreated={({ gl }) => {
           if (config.shadows) {
             gl.shadowMap.autoUpdate = false;
@@ -129,6 +148,8 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
           }
         }}
       >
+        <MasterClockSync />
+
         <RenderMetricsCollector
           navState={navState}
           tier={tier}
@@ -146,12 +167,13 @@ export const ClubRoomScene: React.FC<ClubRoomSceneProps> = ({
 
         <AdaptiveDpr pixelated />
 
-        <color attach="background" args={["#05030a"]} />
+        <color attach="background" args={["#05030A"]} />
+        <fog attach="fog" args={["#05030A", 12, 45]} />
 
-        <Environment preset="night" environmentIntensity={0.35} />
+        <Environment preset="night" environmentIntensity={0.25} />
 
         <SceneLighting
-          activeAccentColor={currentSection?.accentColor ?? "#8b5cf6"}
+          activeAccentColor={currentSection?.accentColor ?? "#7C3AED"}
           shadows={config.shadows}
         />
 

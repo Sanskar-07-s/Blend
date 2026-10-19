@@ -134,7 +134,7 @@ export const NavigationPill: React.FC<NavigationPillProps> = ({
           }}
         >
           {isOverview ? (
-            <span style={{ color: "#c084fc" }}>OVERVIEW</span>
+            <span style={{ color: "#A78BFA" }}>STUDIO OVERVIEW</span>
           ) : (
             <span>
               <span style={{ color: "#a1a1b5", marginRight: "4px" }}>

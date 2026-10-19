@@ -82,6 +82,49 @@ export function applyEmissiveLimits(root: THREE.Object3D) {
               limit = EMISSIVE_LIMITS.regularNeonStrips;
             }
 
+            // Base material colors according to palette:
+            // Base floor/wall: #0B0716, Panel/Wood: #14102A
+            if (
+              groupName === "group_floor" ||
+              groupName.includes("wall") ||
+              matName.includes("floor") ||
+              matName.includes("chao") ||
+              matName.includes("wall") ||
+              matName.includes("parede")
+            ) {
+              m.color.set("#0B0716");
+              m.roughness = Math.max(m.roughness, 0.45);
+            } else if (
+              matName.includes("panel") ||
+              matName.includes("wood") ||
+              matName.includes("desk")
+            ) {
+              if (
+                !matName.includes("strip") &&
+                !matName.includes("neon") &&
+                !matName.includes("led") &&
+                !matName.includes("screen")
+              ) {
+                m.color.set("#14102A");
+              }
+            }
+
+            // Remap emissives to strict palette roles:
+            // primary violet #7C3AED, bright accent #A78BFA, neon magenta #D946EF, cyan #22D3EE
+            if (m.emissive && m.emissive.getHex() !== 0) {
+              if (matName.includes("triangel")) {
+                m.emissive.set("#22D3EE");
+              } else if (matName.includes("square")) {
+                m.emissive.set("#A78BFA");
+              } else if (matName.includes("o") && matName.length <= 3) {
+                m.emissive.set("#D946EF");
+              } else if (matName.includes("x") && matName.length <= 3) {
+                m.emissive.set("#7C3AED");
+              } else if (groupName === "group_sign" || matName.includes("sign") || matName.includes("gamer")) {
+                m.emissive.set("#D946EF");
+              }
+            }
+
             // Apply clamp and balanced emission values
             if (m.emissive) {
               if (limit === EMISSIVE_LIMITS.shelfAndBooks) {
