@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from "react";
 import type { SectionItem } from "../../data/sections";
 import type { QualityTier } from "../../config/quality";
-import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, LogOut } from "lucide-react";
 
 interface ContentPanelProps {
   section: SectionItem;
   onNext: () => void;
   tier?: QualityTier;
+  onExitStudio?: () => void;
 }
 
 export const ContentPanel: React.FC<ContentPanelProps> = ({
   section,
   onNext,
   tier = "high",
+  onExitStudio,
 }) => {
   const [windowWidth, setWindowWidth] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 1200
@@ -190,31 +192,64 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
               </div>
             )}
 
-            <button
-              onClick={onNext}
-              aria-label={section.ctaText ?? "Continue to next section"}
-              style={{
-                width: "100%",
-                minHeight: "44px",
-                background: "linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(168, 85, 247, 0.95))",
-                border: "1px solid #c084fc",
-                borderRadius: "8px",
-                color: "#ffffff",
-                padding: "8px 16px",
-                fontSize: "12px",
-                fontWeight: 700,
-                fontFamily: "Orbitron, sans-serif",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                boxShadow: "0 0 16px rgba(139, 92, 246, 0.4)",
-              }}
-            >
-              <span>{section.ctaText ?? "NEXT SECTION"}</span>
-              <ArrowRight size={15} />
-            </button>
+            <div style={{ display: "flex", gap: "8px", flexDirection: section.id === "join" ? "column" : "row" }}>
+              <button
+                onClick={onNext}
+                aria-label={section.ctaText ?? "Continue to next section"}
+                style={{
+                  flex: 1,
+                  width: "100%",
+                  minHeight: "44px",
+                  background: "linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(168, 85, 247, 0.95))",
+                  border: "1px solid #c084fc",
+                  borderRadius: "8px",
+                  color: "#ffffff",
+                  padding: "8px 16px",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  fontFamily: "Orbitron, sans-serif",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  boxShadow: "0 0 16px rgba(139, 92, 246, 0.4)",
+                }}
+              >
+                <span>{section.ctaText ?? "NEXT SECTION"}</span>
+                <ArrowRight size={15} />
+              </button>
+
+              {section.id === "join" && onExitStudio && (
+                <button
+                  id="exit-studio-mobile-btn"
+                  data-testid="exit-studio-btn"
+                  onClick={onExitStudio}
+                  aria-label="Exit Studio to Club Site"
+                  style={{
+                    width: "100%",
+                    minHeight: "44px",
+                    background: "linear-gradient(135deg, #7C3AED, #D946EF)",
+                    border: "1px solid #D946EF",
+                    borderRadius: "8px",
+                    color: "#ffffff",
+                    padding: "8px 16px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    fontFamily: "Orbitron, sans-serif",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    boxShadow: "0 0 20px rgba(217, 70, 239, 0.4)",
+                  }}
+                >
+                  <span>EXIT STUDIO</span>
+                  <LogOut size={15} />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -324,39 +359,78 @@ export const ContentPanel: React.FC<ContentPanelProps> = ({
         </div>
       )}
 
-      {/* Action button with min 44px touch target */}
-      <button
-        onClick={onNext}
-        aria-label={section.ctaText ?? "Continue to next section"}
-        style={{
-          minHeight: "44px",
-          background: "linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(168, 85, 247, 0.95))",
-          border: "1px solid #c084fc",
-          borderRadius: "8px",
-          color: "#ffffff",
-          padding: "10px 18px",
-          fontSize: "12px",
-          fontWeight: 700,
-          fontFamily: "Orbitron, sans-serif",
-          cursor: "pointer",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "8px",
-          boxShadow: "0 0 16px rgba(139, 92, 246, 0.4)",
-          transition: "all 0.2s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.boxShadow = "0 0 24px rgba(192, 132, 252, 0.7)";
-          e.currentTarget.style.transform = "translateY(-1px)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = "0 0 16px rgba(139, 92, 246, 0.4)";
-          e.currentTarget.style.transform = "translateY(0)";
-        }}
-      >
-        <span>{section.ctaText ?? "NEXT SECTION"}</span>
-        <ArrowRight size={14} />
-      </button>
+      {/* Action buttons */}
+      <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+        <button
+          onClick={onNext}
+          aria-label={section.ctaText ?? "Continue to next section"}
+          style={{
+            minHeight: "44px",
+            background: "linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(168, 85, 247, 0.95))",
+            border: "1px solid #c084fc",
+            borderRadius: "8px",
+            color: "#ffffff",
+            padding: "10px 18px",
+            fontSize: "12px",
+            fontWeight: 700,
+            fontFamily: "Orbitron, sans-serif",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: "0 0 16px rgba(139, 92, 246, 0.4)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = "0 0 24px rgba(192, 132, 252, 0.7)";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = "0 0 16px rgba(139, 92, 246, 0.4)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          <span>{section.ctaText ?? "NEXT SECTION"}</span>
+          <ArrowRight size={14} />
+        </button>
+
+        {section.id === "join" && onExitStudio && (
+          <button
+            id="exit-studio-desktop-btn"
+            data-testid="exit-studio-btn"
+            onClick={onExitStudio}
+            aria-label="Exit Studio to Club Site"
+            style={{
+              minHeight: "44px",
+              background: "linear-gradient(135deg, #7C3AED, #D946EF)",
+              border: "1px solid #D946EF",
+              borderRadius: "8px",
+              color: "#ffffff",
+              padding: "10px 20px",
+              fontSize: "12px",
+              fontWeight: 700,
+              fontFamily: "Orbitron, sans-serif",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: "0 0 20px rgba(217, 70, 239, 0.45)",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = "0 0 30px rgba(217, 70, 239, 0.8)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = "0 0 20px rgba(217, 70, 239, 0.45)";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <span>EXIT STUDIO</span>
+            <LogOut size={14} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };

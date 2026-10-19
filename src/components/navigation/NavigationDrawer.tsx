@@ -1,5 +1,5 @@
 import React from "react";
-import { X, ChevronRight } from "lucide-react";
+import { X, ChevronRight, ArrowRight } from "lucide-react";
 import type { SectionItem } from "../../data/sections";
 
 import type { QualityPreference, QualityTier } from "../../config/quality";
@@ -13,6 +13,7 @@ interface NavigationDrawerProps {
   preference?: QualityPreference;
   activeTier?: QualityTier;
   onChangePreference?: (pref: QualityPreference) => void;
+  onExitStudio?: () => void;
 }
 
 export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
@@ -24,6 +25,7 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
   preference = "auto",
   activeTier = "medium",
   onChangePreference,
+  onExitStudio,
 }) => {
   if (!isOpen) return null;
 
@@ -141,6 +143,41 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
               </button>
             );
           })}
+        </div>
+
+        {/* Exit to Site Action */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <button
+            onClick={() => {
+              onClose();
+              if (onExitStudio) {
+                onExitStudio();
+              } else {
+                window.location.href = "/club";
+              }
+            }}
+            aria-label="Exit to Club Site"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "12px 14px",
+              borderRadius: "8px",
+              background: "linear-gradient(135deg, rgba(124, 58, 237, 0.35), rgba(217, 70, 239, 0.25))",
+              border: "1px solid rgba(192, 132, 252, 0.5)",
+              color: "#F5F3FF",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span className="font-orbitron" style={{ fontSize: "13px", fontWeight: 700, color: "#c084fc" }}>
+                EXIT TO SITE
+              </span>
+              <span style={{ fontSize: "11px", color: "#A8A3C7" }}>Full club portfolio</span>
+            </div>
+            <ArrowRight size={16} color="#c084fc" />
+          </button>
         </div>
 
         {/* Quality Controls */}

@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useProgress } from "@react-three/drei";
+import { Link } from "react-router-dom";
 
 interface LoadingScreenProps {
   onEnter: () => void;
@@ -9,21 +11,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   onEnter,
   isReadyToEnter = false,
 }) => {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(timer);
-          return 100;
-        }
-        return prev + 20;
-      });
-    }, 100);
-
-    return () => clearInterval(timer);
-  }, []);
+  const { progress: realProgress } = useProgress();
+  const displayProgress = Math.round(isReadyToEnter ? 100 : Math.max(realProgress || 0, 5));
 
   return (
     <div
@@ -86,13 +75,18 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         >
           <div
             style={{
-              width: `${isReadyToEnter ? 100 : Math.min(progress, 90)}%`,
+              width: `${displayProgress}%`,
               height: "100%",
               background: "linear-gradient(90deg, #7C3AED, #A78BFA)",
               boxShadow: "0 0 10px #A78BFA",
               transition: "width 0.15s ease",
             }}
           />
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", width: "220px", fontSize: "11px", color: "#A8A3C7", fontFamily: "Orbitron, sans-serif" }}>
+          <span>{isReadyToEnter ? "READY" : "LOADING ASSETS"}</span>
+          <span>{displayProgress}%</span>
         </div>
 
         {/* ENTER Button: Only enabled when quality tier is final and prewarming complete */}
@@ -104,33 +98,62 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
             aria-label="Enter Studio"
             style={{
               marginTop: "8px",
-              background: "transparent",
-              border: "1px solid rgba(124, 58, 237, 0.5)",
+              background: "linear-gradient(135deg, rgba(124, 58, 237, 0.4), rgba(167, 139, 250, 0.3))",
+              border: "1px solid rgba(192, 132, 252, 0.6)",
               borderRadius: "6px",
               color: "#F5F3FF",
-              padding: "10px 24px",
+              padding: "10px 28px",
               fontSize: "13px",
               fontFamily: "Orbitron, sans-serif",
               fontWeight: 700,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.12em",
               cursor: "pointer",
-              boxShadow: "0 0 20px rgba(124, 58, 237, 0.35)",
+              boxShadow: "0 0 24px rgba(124, 58, 237, 0.4)",
               transition: "all 0.25s ease",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "#c084fc";
               e.currentTarget.style.boxShadow = "0 0 30px rgba(192, 132, 252, 0.7)";
-              e.currentTarget.style.background = "rgba(139, 92, 246, 0.15)";
+              e.currentTarget.style.background = "rgba(139, 92, 246, 0.25)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#8b5cf6";
-              e.currentTarget.style.boxShadow = "0 0 20px rgba(139, 92, 246, 0.4)";
-              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.borderColor = "rgba(192, 132, 252, 0.6)";
+              e.currentTarget.style.boxShadow = "0 0 24px rgba(124, 58, 237, 0.4)";
+              e.currentTarget.style.background = "linear-gradient(135deg, rgba(124, 58, 237, 0.4), rgba(167, 139, 250, 0.3))";
             }}
           >
             ENTER
           </button>
         )}
+
+        {/* Persistent Skip to site link */}
+        <Link
+          to="/club"
+          style={{
+            marginTop: "12px",
+            fontSize: "12px",
+            color: "#A8A3C7",
+            textDecoration: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "8px 12px",
+            borderRadius: "6px",
+            border: "1px solid rgba(167, 139, 250, 0.2)",
+            background: "rgba(20, 16, 42, 0.4)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#F5F3FF";
+            e.currentTarget.style.borderColor = "#A78BFA";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#A8A3C7";
+            e.currentTarget.style.borderColor = "rgba(167, 139, 250, 0.2)";
+          }}
+        >
+          Skip to site →
+        </Link>
       </div>
     </div>
   );
